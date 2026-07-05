@@ -17,8 +17,8 @@ not_found_handling = "404-page"
 [[d1_databases]]
 binding = "DB"
 database_name = "streaming_db"
-database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+database_id = "5d5d5e0d-094c-4ac1-a837-9f088ce70141"
 
 [vars]
 SITE_NAME = "StreamHub"
-SITE_URL = "https://streamhubvideoplay.jambrongv2.workers.dev"
+SITE_URL = "https://streamhubvideoplay1.jambrongv2.workers.dev"
