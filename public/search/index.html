@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cari Video - StreamHub</title>
+<meta name="description" content="Cari video favorit Anda di StreamHub secara realtime.">
+<link rel="canonical" href="/search/">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0b0c10">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="/" class="logo">Stream<span>Hub</span></a>
+    <nav class="main-nav">
+      <a href="/">Home</a>
+      <a href="/category/">Kategori</a>
+      <a href="/search/" class="active">Cari</a>
+    </nav>
+    <div class="header-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="quickSearch" placeholder="Cari video...">
+    </div>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1>Cari Video</h1>
+    <p id="searchInfo">Ketik kata kunci untuk mulai mencari.</p>
+  </section>
+  <div class="field" style="max-width:480px;margin:12px 0 20px;">
+    <input type="search" id="mainSearchInput" placeholder="Judul atau kata kunci video...">
+  </div>
+  <div class="video-grid" id="resultGrid"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">&copy; <span id="year"></span> StreamHub. Semua hak dilindungi.</div>
+</footer>
+
+<script src="/js/utils.js"></script>
+<script src="/js/search.js"></script>
+<script src="/js/pwa.js"></script>
+</body>
+</html>
+
