@@ -1,0 +1,24 @@
+name = "streamhubvideoplay"
+main = "src/index.js"
+compatibility_date = "2026-07-05"
+compatibility_flags = ["nodejs_compat"]
+
+# Folder berisi semua file statis (HTML/CSS/JS) yang disajikan langsung
+# oleh Cloudflare. Worker (src/index.js) hanya dipanggil untuk request
+# yang tidak cocok dengan file statis, yaitu /api/* dan /sitemap.xml.
+[assets]
+directory = "public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+# D1 Database binding.
+# Ambil "database_id" dari: Cloudflare Dashboard -> Workers & Pages -> D1
+# -> klik database "streaming_db" -> salin Database ID di halaman Overview-nya.
+[[d1_databases]]
+binding = "DB"
+database_name = "streaming_db"
+database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+
+[vars]
+SITE_NAME = "StreamHub"
+SITE_URL = "https://streamhubvideoplay.jambrongv2.workers.dev"
