@@ -297,7 +297,8 @@
     home_grid: "Home - tengah",
     watch_below_player: "Watch - bawah player",
     watch_sidebar: "Watch - sidebar",
-    category_top: "Kategori - atas",
+    category_top: "Kategori - atas (banner)",
+    category_click: "Kategori - Smartlink saat diklik",
     search_top: "Search - atas",
   };
 

@@ -32,6 +32,40 @@ const Ads = (() => {
     }
   }
 
+  function extractUrl(codeStr) {
+    const trimmed = (codeStr || "").trim();
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    const match = trimmed.match(/href=["']([^"']+)["']/i);
+    return match ? match[1] : null;
+  }
+
+  let categoryClickAds = [];
+
+  async function loadCategoryClickAds() {
+    try {
+      const res = await fetch("/api/ads?placement=category_click");
+      const payload = await res.json();
+      categoryClickAds = (payload && payload.data) || [];
+    } catch {
+      categoryClickAds = [];
+    }
+  }
+
+  function setupCategoryClickRedirect() {
+    document.addEventListener("click", (event) => {
+      if (!categoryClickAds.length) return;
+      const link = event.target.closest('a[href^="/category/"], a[href^="/category"]');
+      if (!link) return;
+
+      const ad = categoryClickAds[Math.floor(Math.random() * categoryClickAds.length)];
+      const url = extractUrl(ad.code);
+      if (!url) return;
+
+      // Buka smartlink di tab baru, biarkan navigasi ke halaman kategori tetap berjalan normal
+      window.open(url, "_blank", "noopener");
+    });
+  }
+
   function init() {
     // Slot iklan biasa: elemen dengan atribut data-ad-placement="xxx" di halaman
     document.querySelectorAll("[data-ad-placement]").forEach((el) => {
@@ -45,6 +79,9 @@ const Ads = (() => {
     globalContainer.style.display = "none";
     document.body.appendChild(globalContainer);
     renderPlacement("global", globalContainer);
+
+    // Smartlink saat link kategori diklik (dimuat sekali, lalu dipasangi listener klik)
+    loadCategoryClickAds().then(setupCategoryClickRedirect);
   }
 
   if (document.readyState === "loading") {

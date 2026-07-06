@@ -338,7 +338,8 @@ const ALLOWED_PLACEMENTS = [
   "home_grid", // Home, di antara section "Video Terbaru" dan "Video Populer"
   "watch_below_player", // Watch, tepat di bawah player
   "watch_sidebar", // Watch, di atas daftar video terkait
-  "category_top", // Kategori, di atas grid video
+  "category_top", // Kategori, di atas grid video (banner biasa)
+  "category_click", // Smartlink: dibuka di tab baru saat link kategori diklik
   "search_top", // Search, di atas hasil pencarian
 ];
 

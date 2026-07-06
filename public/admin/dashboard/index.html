@@ -217,13 +217,19 @@
           <option value="home_grid">Home - tengah (antara Video Terbaru & Populer)</option>
           <option value="watch_below_player">Watch - di bawah player</option>
           <option value="watch_sidebar">Watch - sidebar (atas Video Terkait)</option>
-          <option value="category_top">Kategori - atas grid video</option>
+          <option value="category_top">Kategori - atas grid video (banner biasa)</option>
+          <option value="category_click">Kategori - Smartlink saat diklik (buka tab baru)</option>
           <option value="search_top">Search - atas hasil pencarian</option>
         </select>
       </div>
       <div class="field">
         <label for="adCodeInput">Kode Iklan (paste script dari Adsterra di sini)</label>
         <textarea id="adCodeInput" style="min-height:140px;font-family:monospace;font-size:0.8rem;" placeholder="<script type=&quot;text/javascript&quot;>...</script>" required></textarea>
+        <div style="color:var(--text-dim);font-size:0.78rem;margin-top:6px;">
+          Untuk penempatan <strong>"Kategori - Smartlink saat diklik"</strong>, isi kolom ini
+          dengan <strong>URL smartlink saja</strong> (contoh: <code>https://contoh.com/abc123</code>),
+          bukan kode script.
+        </div>
       </div>
       <div class="field">
         <label style="display:flex;align-items:center;gap:8px;">
