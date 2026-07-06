@@ -1,18 +1,15 @@
 -- ============================================================
 -- Schema database D1 untuk StreamHub
+-- AMAN dijalankan berkali-kali / di database yang sudah berisi data —
+-- semua perintah memakai "IF NOT EXISTS" sehingga tidak akan menghapus
+-- atau menimpa tabel/data yang sudah ada.
+--
 -- Jalankan dengan:
 --   wrangler d1 execute streaming_db --remote --file=./database/schema.sql
 -- ============================================================
 
-DROP TABLE IF EXISTS view_logs;
-DROP TABLE IF EXISTS login_attempts;
-DROP TABLE IF EXISTS sessions;
-DROP TABLE IF EXISTS videos;
-DROP TABLE IF EXISTS categories;
-DROP TABLE IF EXISTS admins;
-
 -- Admin yang bisa login ke dashboard
-CREATE TABLE admins (
+CREATE TABLE IF NOT EXISTS admins (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   username      TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
@@ -21,7 +18,7 @@ CREATE TABLE admins (
 );
 
 -- Sesi login admin (dipakai untuk cookie session + CSRF token)
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
   id          TEXT PRIMARY KEY,
   admin_id    INTEGER NOT NULL,
   csrf_token  TEXT NOT NULL,
@@ -31,7 +28,7 @@ CREATE TABLE sessions (
 );
 
 -- Kategori video
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   name       TEXT NOT NULL,
   slug       TEXT NOT NULL UNIQUE,
@@ -39,7 +36,7 @@ CREATE TABLE categories (
 );
 
 -- Video
-CREATE TABLE videos (
+CREATE TABLE IF NOT EXISTS videos (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   title         TEXT NOT NULL,
   slug          TEXT NOT NULL UNIQUE,
@@ -56,7 +53,7 @@ CREATE TABLE videos (
 );
 
 -- Log view untuk proteksi anti-spam refresh (rate limit view counter)
-CREATE TABLE view_logs (
+CREATE TABLE IF NOT EXISTS view_logs (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   video_id   INTEGER NOT NULL,
   ip_hash    TEXT NOT NULL,
@@ -65,19 +62,31 @@ CREATE TABLE view_logs (
 );
 
 -- Log percobaan login untuk rate limiting brute force
-CREATE TABLE login_attempts (
+CREATE TABLE IF NOT EXISTS login_attempts (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   ip_hash       TEXT NOT NULL,
   attempted_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Zona iklan Adsterra (atau provider lain) yang dikelola lewat dashboard admin
+CREATE TABLE IF NOT EXISTS ad_zones (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  name         TEXT NOT NULL,
+  placement    TEXT NOT NULL,
+  code         TEXT NOT NULL,
+  enabled      INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Index untuk performa query
-CREATE INDEX idx_videos_status       ON videos(status);
-CREATE INDEX idx_videos_category     ON videos(category_id);
-CREATE INDEX idx_videos_views        ON videos(views DESC);
-CREATE INDEX idx_videos_publish_date ON videos(publish_date DESC);
-CREATE INDEX idx_videos_slug         ON videos(slug);
-CREATE INDEX idx_categories_slug     ON categories(slug);
-CREATE INDEX idx_view_logs_lookup    ON view_logs(video_id, ip_hash, viewed_at);
-CREATE INDEX idx_login_attempts_ip   ON login_attempts(ip_hash, attempted_at);
-CREATE INDEX idx_sessions_expires    ON sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_ad_zones_placement ON ad_zones(placement, enabled);
+CREATE INDEX IF NOT EXISTS idx_videos_status       ON videos(status);
+CREATE INDEX IF NOT EXISTS idx_videos_category     ON videos(category_id);
+CREATE INDEX IF NOT EXISTS idx_videos_views        ON videos(views DESC);
+CREATE INDEX IF NOT EXISTS idx_videos_publish_date ON videos(publish_date DESC);
+CREATE INDEX IF NOT EXISTS idx_videos_slug         ON videos(slug);
+CREATE INDEX IF NOT EXISTS idx_categories_slug     ON categories(slug);
+CREATE INDEX IF NOT EXISTS idx_view_logs_lookup    ON view_logs(video_id, ip_hash, viewed_at);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_ip   ON login_attempts(ip_hash, attempted_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires    ON sessions(expires_at);

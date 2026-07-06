@@ -74,13 +74,22 @@ npm install -g wrangler
    database_name = "streaming_db"
    database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
    ```
-3. Jalankan migrasi schema:
+3. Jalankan schema:
    ```bash
    # Untuk database remote (production)
    npx wrangler d1 execute streaming_db --remote --file=./database/schema.sql
 
    # Untuk testing lokal
    npx wrangler d1 execute streaming_db --local --file=./database/schema.sql
+   ```
+   `schema.sql` aman dijalankan berkali-kali (memakai `CREATE TABLE IF NOT EXISTS`) — tidak akan
+   menghapus data yang sudah ada bila Anda menjalankannya ulang di database yang sudah terisi,
+   misalnya setelah update project ke versi yang lebih baru (mis. menambah fitur Kelola Iklan).
+
+   Jika Anda hanya ingin menambahkan tabel iklan (`ad_zones`) ke database yang sudah berjalan
+   tanpa menyentuh apa pun yang lain, bisa juga jalankan file migrasi khusus:
+   ```bash
+   npx wrangler d1 execute streaming_db --remote --file=./database/migration_ads.sql
    ```
 4. (Opsional) Isi data contoh:
    ```bash
@@ -207,7 +216,35 @@ Field **Link Embed** menerima:
 
 ---
 
-## 10. Pengembangan Lokal
+## 11. Cara Memasang Iklan (Adsterra, dll)
+
+Situs ini punya sistem **Kelola Iklan** bawaan di dashboard admin — tidak perlu edit kode atau
+upload ulang untuk menambah/mengganti iklan.
+
+1. Login ke `/admin/dashboard/`, buka tab **Iklan**.
+2. Klik **+ Tambah Zona Iklan**.
+3. Isi:
+   - **Nama Zona** — nama bebas untuk referensi Anda sendiri (mis. "Adsterra Banner Home").
+   - **Penempatan** — pilih lokasi tayang:
+     - `Global` — dimuat di semua halaman publik, cocok untuk format Popunder/Social Bar.
+     - `Home - atas` / `Home - tengah` — di halaman Home.
+     - `Watch - bawah player` / `Watch - sidebar` — di halaman Watch.
+     - `Kategori - atas`, `Search - atas` — di halaman masing-masing.
+   - **Kode Iklan** — paste utuh kode `<script>`/HTML dari dashboard Adsterra (atau provider lain).
+   - **Aktifkan iklan ini** — centang untuk langsung tayang, atau uncheck untuk simpan sebagai draft.
+4. Simpan. Iklan langsung muncul di lokasi yang dipilih tanpa perlu deploy ulang.
+5. Untuk menonaktifkan sementara, edit zona iklan tersebut dan hilangkan centang "Aktifkan".
+
+**Catatan keamanan:** kode di kolom ini dieksekusi apa adanya di browser pengunjung (persis seperti
+cara kerja iklan pada umumnya). Hanya tempel kode dari provider iklan yang Anda percaya (mis. akun
+Adsterra Anda sendiri) — jangan tempel kode dari sumber yang tidak jelas.
+
+**ads.txt:** jika provider iklan Anda meminta verifikasi lewat file `ads.txt`, edit file
+`public/ads.txt` sesuai instruksi dari dashboard provider tersebut, lalu commit & deploy ulang.
+
+---
+
+## 12. Pengembangan Lokal
 
 ```bash
 npx wrangler dev

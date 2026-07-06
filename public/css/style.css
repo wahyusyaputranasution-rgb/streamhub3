@@ -433,6 +433,16 @@ button { font-family: inherit; cursor: pointer; }
 .not-found h1 { font-size: 4rem; margin: 0; color: var(--accent); }
 .not-found p { color: var(--text-dim); margin: 8px 0 20px; }
 
+/* ===== Ad slot ===== */
+.ad-slot {
+  margin: 16px 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+.ad-slot:empty { margin: 0; }
+
 /* ===== Pagination ===== */
 .pagination { display: flex; gap: 6px; justify-content: center; padding: 24px 0; flex-wrap: wrap; }
 .pagination button {

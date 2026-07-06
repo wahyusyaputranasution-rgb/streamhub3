@@ -18,6 +18,7 @@
       <a href="#dashboard" data-tab="dashboard" class="active">Dashboard</a>
       <a href="#video" data-tab="video">Video</a>
       <a href="#kategori" data-tab="kategori">Kategori</a>
+      <a href="#iklan" data-tab="iklan">Iklan</a>
       <a href="#pengaturan" data-tab="pengaturan">Pengaturan</a>
       <button class="logout-btn" id="logoutBtn">Logout</button>
     </nav>
@@ -33,6 +34,7 @@
       <button data-tab="dashboard" class="active">Dashboard</button>
       <button data-tab="video">Video</button>
       <button data-tab="kategori">Kategori</button>
+      <button data-tab="iklan">Iklan</button>
       <button data-tab="pengaturan">Pengaturan</button>
     </div>
 
@@ -90,6 +92,26 @@
           <table class="data-table">
             <thead><tr><th>Nama</th><th>Slug</th><th>Jumlah Video</th><th>Aksi</th></tr></thead>
             <tbody id="categoriesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: IKLAN -->
+    <section class="tab-panel" id="tab-iklan" style="display:none;">
+      <div class="panel">
+        <div class="panel-title">
+          <h2>Kelola Iklan (Adsterra dkk)</h2>
+          <button class="btn btn-primary" id="addAdBtn">+ Tambah Zona Iklan</button>
+        </div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Tempel kode/script iklan dari dashboard provider (mis. Adsterra) ke sini, pilih lokasi
+          tayangnya, lalu simpan. Iklan langsung tampil di situs tanpa perlu ubah kode.
+        </p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Nama</th><th>Penempatan</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="adsBody"></tbody>
           </table>
         </div>
       </div>
@@ -171,6 +193,47 @@
       <div class="field-error" id="categoryFormError"></div>
       <div class="modal-actions">
         <button type="button" class="btn" id="categoryCancelBtn">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: AD ZONE FORM -->
+<div class="modal-overlay" id="adModal">
+  <div class="modal-box">
+    <h2 id="adModalTitle">Tambah Zona Iklan</h2>
+    <form id="adForm">
+      <input type="hidden" id="adId">
+      <div class="field">
+        <label for="adNameInput">Nama Zona (untuk referensi Anda sendiri)</label>
+        <input type="text" id="adNameInput" placeholder="Contoh: Adsterra Banner Home" required>
+      </div>
+      <div class="field">
+        <label for="adPlacementSelect">Penempatan</label>
+        <select id="adPlacementSelect" required>
+          <option value="global">Global (semua halaman) - cocok untuk Popunder/Social Bar</option>
+          <option value="home_top">Home - atas (sebelum Video Terbaru)</option>
+          <option value="home_grid">Home - tengah (antara Video Terbaru & Populer)</option>
+          <option value="watch_below_player">Watch - di bawah player</option>
+          <option value="watch_sidebar">Watch - sidebar (atas Video Terkait)</option>
+          <option value="category_top">Kategori - atas grid video</option>
+          <option value="search_top">Search - atas hasil pencarian</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="adCodeInput">Kode Iklan (paste script dari Adsterra di sini)</label>
+        <textarea id="adCodeInput" style="min-height:140px;font-family:monospace;font-size:0.8rem;" placeholder="<script type=&quot;text/javascript&quot;>...</script>" required></textarea>
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="adEnabledInput" style="width:auto;" checked>
+          <span>Aktifkan iklan ini</span>
+        </label>
+      </div>
+      <div class="field-error" id="adFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="adCancelBtn">Batal</button>
         <button type="submit" class="btn btn-primary">Simpan</button>
       </div>
     </form>

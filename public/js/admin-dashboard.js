@@ -27,10 +27,11 @@
     dashboard: document.getElementById("tab-dashboard"),
     video: document.getElementById("tab-video"),
     kategori: document.getElementById("tab-kategori"),
+    iklan: document.getElementById("tab-iklan"),
     pengaturan: document.getElementById("tab-pengaturan"),
   };
   const topbarTitle = document.getElementById("topbarTitle");
-  const titles = { dashboard: "Dashboard", video: "Kelola Video", kategori: "Kelola Kategori", pengaturan: "Pengaturan" };
+  const titles = { dashboard: "Dashboard", video: "Kelola Video", kategori: "Kelola Kategori", iklan: "Kelola Iklan", pengaturan: "Pengaturan" };
 
   function activateTab(tab) {
     Object.keys(tabPanels).forEach((key) => {
@@ -42,6 +43,7 @@
     if (tab === "dashboard") loadStats();
     if (tab === "video") loadVideosTable();
     if (tab === "kategori") loadCategoriesTable();
+    if (tab === "iklan") loadAdsTable();
   }
 
   document.querySelectorAll(".admin-nav a").forEach((a) => {
@@ -285,6 +287,117 @@
     } catch (err) {
       categoryFormError.textContent = err.message || "Gagal menyimpan kategori";
       categoryFormError.style.display = "block";
+    }
+  });
+
+  // ---------- Ads table ----------
+  const PLACEMENT_LABELS = {
+    global: "Global (semua halaman)",
+    home_top: "Home - atas",
+    home_grid: "Home - tengah",
+    watch_below_player: "Watch - bawah player",
+    watch_sidebar: "Watch - sidebar",
+    category_top: "Kategori - atas",
+    search_top: "Search - atas",
+  };
+
+  async function loadAdsTable() {
+    const tbody = document.getElementById("adsBody");
+    tbody.innerHTML = `<tr><td colspan="4">Memuat...</td></tr>`;
+    try {
+      const res = await Utils.api("/api/ads?admin=1");
+      const items = res.data;
+      tbody.innerHTML = items.length
+        ? items
+            .map(
+              (a) => `<tr>
+          <td class="title-cell">${Utils.escapeHtml(a.name)}</td>
+          <td>${Utils.escapeHtml(PLACEMENT_LABELS[a.placement] || a.placement)}</td>
+          <td>${a.enabled ? '<span class="badge published">Aktif</span>' : '<span class="badge draft">Nonaktif</span>'}</td>
+          <td>
+            <button class="icon-btn" data-edit-ad="${a.id}">Edit</button>
+            <button class="icon-btn danger" data-delete-ad="${a.id}" data-name="${Utils.escapeHtml(a.name)}">Hapus</button>
+          </td>
+        </tr>`
+            )
+            .join("")
+        : `<tr><td colspan="4">Belum ada zona iklan. Klik "+ Tambah Zona Iklan" untuk mulai.</td></tr>`;
+
+      tbody.querySelectorAll("[data-edit-ad]").forEach((btn) => btn.addEventListener("click", () => openAdModal(btn.dataset.editAd)));
+      tbody.querySelectorAll("[data-delete-ad]").forEach((btn) =>
+        btn.addEventListener("click", () => confirmAction(`Hapus zona iklan "${btn.dataset.name}"?`, () => deleteAd(btn.dataset.deleteAd)))
+      );
+    } catch {
+      tbody.innerHTML = `<tr><td colspan="4">Gagal memuat data iklan.</td></tr>`;
+    }
+  }
+
+  async function deleteAd(id) {
+    try {
+      await Utils.api(`/api/ads/${id}`, { method: "DELETE", needsCsrf: true });
+      showToast("Zona iklan dihapus");
+      loadAdsTable();
+    } catch (err) {
+      showToast(err.message || "Gagal menghapus zona iklan");
+    }
+  }
+
+  // ---------- Ad modal ----------
+  const adModal = document.getElementById("adModal");
+  const adForm = document.getElementById("adForm");
+  const adFormError = document.getElementById("adFormError");
+
+  document.getElementById("addAdBtn").addEventListener("click", () => openAdModal(null));
+  document.getElementById("adCancelBtn").addEventListener("click", () => adModal.classList.remove("show"));
+
+  async function openAdModal(id) {
+    adFormError.style.display = "none";
+    adForm.reset();
+    document.getElementById("adId").value = id || "";
+    document.getElementById("adModalTitle").textContent = id ? "Edit Zona Iklan" : "Tambah Zona Iklan";
+    document.getElementById("adEnabledInput").checked = true;
+
+    if (id) {
+      try {
+        const res = await Utils.api("/api/ads?admin=1");
+        const ad = (res.data || []).find((a) => String(a.id) === String(id));
+        if (!ad) throw new Error("Zona iklan tidak ditemukan");
+        document.getElementById("adNameInput").value = ad.name;
+        document.getElementById("adPlacementSelect").value = ad.placement;
+        document.getElementById("adCodeInput").value = ad.code;
+        document.getElementById("adEnabledInput").checked = !!ad.enabled;
+      } catch (err) {
+        showToast("Gagal memuat data iklan");
+        return;
+      }
+    }
+    adModal.classList.add("show");
+  }
+
+  adForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    adFormError.style.display = "none";
+    const id = document.getElementById("adId").value;
+    const payload = {
+      name: document.getElementById("adNameInput").value.trim(),
+      placement: document.getElementById("adPlacementSelect").value,
+      code: document.getElementById("adCodeInput").value.trim(),
+      enabled: document.getElementById("adEnabledInput").checked,
+    };
+
+    try {
+      if (id) {
+        await Utils.api(`/api/ads/${id}`, { method: "PUT", body: payload, needsCsrf: true });
+        showToast("Zona iklan diperbarui");
+      } else {
+        await Utils.api("/api/ads", { method: "POST", body: payload, needsCsrf: true });
+        showToast("Zona iklan ditambahkan");
+      }
+      adModal.classList.remove("show");
+      loadAdsTable();
+    } catch (err) {
+      adFormError.textContent = err.message || "Gagal menyimpan zona iklan";
+      adFormError.style.display = "block";
     }
   });
 

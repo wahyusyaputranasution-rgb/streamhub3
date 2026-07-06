@@ -26,6 +26,9 @@ import {
   getStats,
   generateUniqueSlug,
   generateUniqueCategorySlug,
+  listAdZones,
+  getAdZoneById,
+  getActiveAdsByPlacement,
 } from "../lib/db.js";
 import { normalizeEmbedUrl } from "../lib/embed.js";
 
@@ -327,6 +330,102 @@ async function handleCategoryById(request, env, id) {
   return fail("Method tidak diizinkan", 405);
 }
 
+// ================= ADS =================
+
+const ALLOWED_PLACEMENTS = [
+  "global", // dimuat di semua halaman publik (cocok untuk popunder/social bar)
+  "home_top", // Home, di bawah hero sebelum daftar video
+  "home_grid", // Home, di antara section "Video Terbaru" dan "Video Populer"
+  "watch_below_player", // Watch, tepat di bawah player
+  "watch_sidebar", // Watch, di atas daftar video terkait
+  "category_top", // Kategori, di atas grid video
+  "search_top", // Search, di atas hasil pencarian
+];
+
+async function handleAdsCollection(request, env, url) {
+  if (request.method === "GET") {
+    const wantsAdminView = url.searchParams.get("admin") === "1";
+    if (wantsAdminView) {
+      const session = await requireAuth(request, env.DB);
+      if (!session) return unauthorized();
+      const zones = await listAdZones(env.DB);
+      return ok(zones);
+    }
+
+    const placement = url.searchParams.get("placement") || "";
+    if (!ALLOWED_PLACEMENTS.includes(placement)) return ok([]);
+    const ads = await getActiveAdsByPlacement(env.DB, placement);
+    return ok(ads);
+  }
+
+  if (request.method === "POST") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+    const body = await request.json().catch(() => ({}));
+    const name = sanitizeText((body.name || "").trim());
+    const placement = (body.placement || "").trim();
+    const code = (body.code || "").trim();
+    const enabled = body.enabled === false ? 0 : 1;
+
+    if (!name) return fail("Nama zona iklan wajib diisi");
+    if (!ALLOWED_PLACEMENTS.includes(placement)) return fail("Penempatan (placement) tidak valid");
+    if (!code) return fail("Kode iklan wajib diisi");
+
+    const result = await env.DB
+      .prepare("INSERT INTO ad_zones (name, placement, code, enabled) VALUES (?, ?, ?, ?)")
+      .bind(name, placement, code, enabled)
+      .run();
+
+    return ok({ id: result.meta.last_row_id }, { message: "Zona iklan berhasil dibuat" });
+  }
+
+  return fail("Method tidak diizinkan", 405);
+}
+
+async function handleAdZoneById(request, env, id) {
+  if (request.method === "PUT") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+    const existing = await getAdZoneById(env.DB, id);
+    if (!existing) return notFound("Zona iklan tidak ditemukan");
+
+    const body = await request.json().catch(() => ({}));
+    const name = sanitizeText((body.name || "").trim());
+    const placement = (body.placement || "").trim();
+    const code = (body.code || "").trim();
+    const enabled = body.enabled === false ? 0 : 1;
+
+    if (!name) return fail("Nama zona iklan wajib diisi");
+    if (!ALLOWED_PLACEMENTS.includes(placement)) return fail("Penempatan (placement) tidak valid");
+    if (!code) return fail("Kode iklan wajib diisi");
+
+    await env.DB
+      .prepare("UPDATE ad_zones SET name = ?, placement = ?, code = ?, enabled = ?, updated_at = datetime('now') WHERE id = ?")
+      .bind(name, placement, code, enabled, id)
+      .run();
+
+    return ok({ id }, { message: "Zona iklan berhasil diperbarui" });
+  }
+
+  if (request.method === "DELETE") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+    const existing = await getAdZoneById(env.DB, id);
+    if (!existing) return notFound("Zona iklan tidak ditemukan");
+
+    await env.DB.prepare("DELETE FROM ad_zones WHERE id = ?").bind(id).run();
+    return ok(null, { message: "Zona iklan berhasil dihapus" });
+  }
+
+  return fail("Method tidak diizinkan", 405);
+}
+
 // ================= SEARCH / STATS / SITEMAP =================
 
 async function handleSearch(request, env, url) {
@@ -421,6 +520,11 @@ export default {
       } else if (/^\/api\/view\/\d+$/.test(path)) {
         const id = parseInt(path.split("/").pop(), 10);
         response = await handleViewCounter(request, env, id);
+      } else if (path === "/api/ads") {
+        response = await handleAdsCollection(request, env, url);
+      } else if (/^\/api\/ads\/\d+$/.test(path)) {
+        const id = parseInt(path.split("/").pop(), 10);
+        response = await handleAdZoneById(request, env, id);
       } else if (path === "/api/search") {
         response = await handleSearch(request, env, url);
       } else if (path === "/api/stats") {
@@ -446,4 +550,3 @@ export default {
     }
   },
 };
-                                             
