@@ -29,6 +29,9 @@ import {
   listAdZones,
   getAdZoneById,
   getActiveAdsByPlacement,
+  incrementAdImpression,
+  listAdmins,
+  countAdmins,
 } from "../lib/db.js";
 import { normalizeEmbedUrl } from "../lib/embed.js";
 
@@ -124,6 +127,82 @@ async function handleAuthCheck(request, env) {
   const session = await getSession(request, env.DB);
   if (!session) return unauthorized();
   return ok({ username: session.username, csrfToken: session.csrf_token });
+}
+
+async function handleChangePassword(request, env) {
+  if (request.method !== "POST") return fail("Method tidak diizinkan", 405);
+  const session = await requireAuth(request, env.DB);
+  if (!session) return unauthorized();
+  if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+  const body = await request.json().catch(() => ({}));
+  const currentPassword = body.currentPassword || "";
+  const newPassword = body.newPassword || "";
+  if (newPassword.length < 8) return fail("Password baru minimal 8 karakter");
+
+  const admin = await env.DB.prepare("SELECT id, salt, password_hash FROM admins WHERE id = ?").bind(session.admin_id).first();
+  if (!admin) return notFound("Akun admin tidak ditemukan");
+
+  const valid = await verifyPassword(currentPassword, admin.salt, admin.password_hash);
+  if (!valid) return fail("Password saat ini salah", 401);
+
+  const newSalt = generateSalt();
+  const newHash = await hashPassword(newPassword, newSalt);
+  await env.DB.prepare("UPDATE admins SET password_hash = ?, salt = ? WHERE id = ?").bind(newHash, newSalt, admin.id).run();
+
+  return ok(null, { message: "Password berhasil diubah" });
+}
+
+// ================= ADMIN MANAGEMENT (multi-admin) =================
+
+async function handleAdminsCollection(request, env) {
+  if (request.method === "GET") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    const admins = await listAdmins(env.DB);
+    return ok(admins);
+  }
+
+  if (request.method === "POST") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+    const body = await request.json().catch(() => ({}));
+    const username = (body.username || "").trim();
+    const password = body.password || "";
+    if (username.length < 3) return fail("Username minimal 3 karakter");
+    if (password.length < 8) return fail("Password minimal 8 karakter");
+
+    const existing = await env.DB.prepare("SELECT id FROM admins WHERE username = ?").bind(username).first();
+    if (existing) return fail("Username sudah dipakai");
+
+    const salt = generateSalt();
+    const hash = await hashPassword(password, salt);
+    const result = await env.DB.prepare("INSERT INTO admins (username, password_hash, salt) VALUES (?, ?, ?)").bind(username, hash, salt).run();
+
+    return ok({ id: result.meta.last_row_id, username }, { message: "Admin baru berhasil dibuat" });
+  }
+
+  return fail("Method tidak diizinkan", 405);
+}
+
+async function handleAdminById(request, env, id) {
+  if (request.method !== "DELETE") return fail("Method tidak diizinkan", 405);
+  const session = await requireAuth(request, env.DB);
+  if (!session) return unauthorized();
+  if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+  if (String(session.admin_id) === String(id)) return fail("Tidak bisa menghapus akun yang sedang login");
+
+  const total = await countAdmins(env.DB);
+  if (total <= 1) return fail("Tidak bisa menghapus admin terakhir");
+
+  const existing = await env.DB.prepare("SELECT id FROM admins WHERE id = ?").bind(id).first();
+  if (!existing) return notFound("Admin tidak ditemukan");
+
+  await env.DB.prepare("DELETE FROM admins WHERE id = ?").bind(id).run();
+  return ok(null, { message: "Admin berhasil dihapus" });
 }
 
 // ================= VIDEOS =================
@@ -427,6 +506,14 @@ async function handleAdZoneById(request, env, id) {
   return fail("Method tidak diizinkan", 405);
 }
 
+async function handleAdImpressionTrack(request, env, id) {
+  if (request.method !== "POST") return fail("Method tidak diizinkan", 405);
+  const existing = await getAdZoneById(env.DB, id);
+  if (!existing) return notFound("Zona iklan tidak ditemukan");
+  await incrementAdImpression(env.DB, id);
+  return ok(null);
+}
+
 // ================= SEARCH / STATS / SITEMAP =================
 
 async function handleSearch(request, env, url) {
@@ -505,6 +592,13 @@ export default {
         response = await handleAuthLogout(request, env);
       } else if (path === "/api/auth/check") {
         response = await handleAuthCheck(request, env);
+      } else if (path === "/api/auth/change-password") {
+        response = await handleChangePassword(request, env);
+      } else if (path === "/api/admins") {
+        response = await handleAdminsCollection(request, env);
+      } else if (/^\/api\/admins\/\d+$/.test(path)) {
+        const id = parseInt(path.split("/").pop(), 10);
+        response = await handleAdminById(request, env, id);
       } else if (path === "/api/videos") {
         response = await handleVideosCollection(request, env, url);
       } else if (/^\/api\/videos\/\d+$/.test(path)) {
@@ -526,6 +620,9 @@ export default {
       } else if (/^\/api\/ads\/\d+$/.test(path)) {
         const id = parseInt(path.split("/").pop(), 10);
         response = await handleAdZoneById(request, env, id);
+      } else if (/^\/api\/ads\/track\/\d+$/.test(path)) {
+        const id = parseInt(path.split("/").pop(), 10);
+        response = await handleAdImpressionTrack(request, env, id);
       } else if (path === "/api/search") {
         response = await handleSearch(request, env, url);
       } else if (path === "/api/stats") {

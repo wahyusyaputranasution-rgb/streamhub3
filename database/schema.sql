@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS ad_zones (
   placement    TEXT NOT NULL,
   code         TEXT NOT NULL,
   enabled      INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+  impressions  INTEGER NOT NULL DEFAULT 0,
   created_at   TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );

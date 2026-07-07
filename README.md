@@ -271,7 +271,40 @@ Clear Data), lalu PIN akan diminta dibuat ulang dari awal.
 
 ---
 
-## 14. Pengembangan Lokal
+## 15. Fitur Tambahan: Multi-Admin, Ganti Password, Import CSV, Statistik Iklan
+
+**Ganti Password** — tab Pengaturan → isi password saat ini + password baru (minimal 8 karakter).
+
+**Multi-Admin** — tab Pengaturan → bagian "Kelola Admin" → **+ Tambah Admin** untuk menambah akun
+admin lain. Tidak bisa menghapus akun yang sedang login atau admin terakhir yang tersisa (supaya
+tidak ada yang terkunci total dari dashboard).
+
+**Import Video Massal via CSV** — tab Video → **Import CSV**. Format kolom (baris pertama harus
+persis header ini):
+```
+title,description,category_name,embed_url,thumbnail_url,status,publish_date
+```
+- `status` diisi `draft` atau `published`.
+- `category_name` boleh kosong; kalau diisi dan kategorinya belum ada, otomatis dibuat.
+- `publish_date` boleh kosong (format ISO kalau diisi, mis. `2026-07-01T10:00:00`).
+- Bisa upload file `.csv` langsung atau paste isinya ke kotak teks.
+- Proses berjalan satu per satu dan menampilkan progress + jumlah berhasil/gagal di akhir.
+
+**Statistik Impresi Iklan** — tab Iklan sekarang menampilkan kolom **Impresi**, dihitung otomatis
+setiap kali zona iklan tersebut berhasil dimuat/tampil ke pengunjung (untuk placement banner/global)
+atau saat smartlink benar-benar dibuka (untuk placement "Kategori - Smartlink saat diklik").
+
+**Migrasi database yang diperlukan:** fitur statistik impresi butuh kolom baru di tabel `ad_zones`.
+Jika database Anda sudah berjalan sebelum fitur ini ada, jalankan sekali:
+```bash
+wrangler d1 execute streaming_db --remote --file=./database/migration_v2.sql
+```
+Fitur ganti password & multi-admin **tidak butuh migrasi apa pun** (memakai tabel `admins` yang
+sudah ada sejak awal).
+
+---
+
+## 16. Pengembangan Lokal
 
 ```bash
 npx wrangler dev

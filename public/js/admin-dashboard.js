@@ -15,6 +15,7 @@
     try {
       const res = await Utils.api("/api/auth/check");
       Utils.setCsrfToken(res.data.csrfToken);
+      currentAdminUsername = res.data.username;
       document.getElementById("adminUsername").textContent = res.data.username;
       document.getElementById("settingsUsername").textContent = res.data.username;
     } catch {
@@ -44,6 +45,7 @@
     if (tab === "video") loadVideosTable();
     if (tab === "kategori") loadCategoriesTable();
     if (tab === "iklan") loadAdsTable();
+    if (tab === "pengaturan") loadAdminsTable();
   }
 
   document.querySelectorAll(".admin-nav a").forEach((a) => {
@@ -64,6 +66,94 @@
   }
   document.getElementById("logoutBtn").addEventListener("click", doLogout);
   document.getElementById("logoutBtn2").addEventListener("click", doLogout);
+
+  // ---------- Ganti Password ----------
+  const changePasswordForm = document.getElementById("changePasswordForm");
+  const passwordFormError = document.getElementById("passwordFormError");
+
+  changePasswordForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    passwordFormError.style.display = "none";
+    const currentPassword = document.getElementById("currentPasswordInput").value;
+    const newPassword = document.getElementById("newPasswordInput").value;
+
+    try {
+      await Utils.api("/api/auth/change-password", { method: "POST", body: { currentPassword, newPassword }, needsCsrf: true });
+      showToast("Password berhasil diubah");
+      changePasswordForm.reset();
+    } catch (err) {
+      passwordFormError.textContent = err.message || "Gagal mengubah password";
+      passwordFormError.style.display = "block";
+    }
+  });
+
+  // ---------- Kelola Admin ----------
+  let currentAdminUsername = "";
+
+  async function loadAdminsTable() {
+    const tbody = document.getElementById("adminsBody");
+    tbody.innerHTML = `<tr><td colspan="3">Memuat...</td></tr>`;
+    try {
+      const res = await Utils.api("/api/admins");
+      const items = res.data;
+      tbody.innerHTML = items
+        .map(
+          (a) => `<tr>
+        <td>${Utils.escapeHtml(a.username)}${a.username === currentAdminUsername ? ' <span class="badge published">Anda</span>' : ""}</td>
+        <td>${Utils.formatDate(a.created_at)}</td>
+        <td>${
+          a.username === currentAdminUsername
+            ? '<span style="color:var(--text-dim);font-size:0.8rem;">-</span>'
+            : `<button class="icon-btn danger" data-delete-admin="${a.id}" data-username="${Utils.escapeHtml(a.username)}">Hapus</button>`
+        }</td>
+      </tr>`
+        )
+        .join("");
+
+      tbody.querySelectorAll("[data-delete-admin]").forEach((btn) =>
+        btn.addEventListener("click", () => confirmAction(`Hapus admin "${btn.dataset.username}"?`, () => deleteAdmin(btn.dataset.deleteAdmin)))
+      );
+    } catch {
+      tbody.innerHTML = `<tr><td colspan="3">Gagal memuat data admin.</td></tr>`;
+    }
+  }
+
+  async function deleteAdmin(id) {
+    try {
+      await Utils.api(`/api/admins/${id}`, { method: "DELETE", needsCsrf: true });
+      showToast("Admin dihapus");
+      loadAdminsTable();
+    } catch (err) {
+      showToast(err.message || "Gagal menghapus admin");
+    }
+  }
+
+  const addAdminModal = document.getElementById("addAdminModal");
+  const addAdminForm = document.getElementById("addAdminForm");
+  const addAdminFormError = document.getElementById("addAdminFormError");
+
+  document.getElementById("addAdminBtn").addEventListener("click", () => {
+    addAdminFormError.style.display = "none";
+    addAdminForm.reset();
+    addAdminModal.classList.add("show");
+  });
+  document.getElementById("addAdminCancelBtn").addEventListener("click", () => addAdminModal.classList.remove("show"));
+
+  addAdminForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    addAdminFormError.style.display = "none";
+    const username = document.getElementById("newAdminUsername").value.trim();
+    const password = document.getElementById("newAdminPassword").value;
+    try {
+      await Utils.api("/api/admins", { method: "POST", body: { username, password }, needsCsrf: true });
+      showToast("Admin baru ditambahkan");
+      addAdminModal.classList.remove("show");
+      loadAdminsTable();
+    } catch (err) {
+      addAdminFormError.textContent = err.message || "Gagal menambah admin";
+      addAdminFormError.style.display = "block";
+    }
+  });
 
   // ---------- Dashboard stats ----------
   function statusBadge(status) {
@@ -210,6 +300,144 @@
     }
   });
 
+  // ---------- Import CSV ----------
+  function parseCsv(text) {
+    const rows = [];
+    let row = [];
+    let field = "";
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (inQuotes) {
+        if (char === '"') {
+          if (text[i + 1] === '"') {
+            field += '"';
+            i++;
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          field += char;
+        }
+      } else if (char === '"') {
+        inQuotes = true;
+      } else if (char === ",") {
+        row.push(field);
+        field = "";
+      } else if (char === "\n") {
+        row.push(field);
+        rows.push(row);
+        row = [];
+        field = "";
+      } else if (char === "\r") {
+        // lewati
+      } else {
+        field += char;
+      }
+    }
+    if (field.length || row.length) {
+      row.push(field);
+      rows.push(row);
+    }
+    return rows.filter((r) => r.some((cell) => cell.trim() !== ""));
+  }
+
+  const csvModal = document.getElementById("csvModal");
+  const csvFormError = document.getElementById("csvFormError");
+  const csvProgress = document.getElementById("csvProgress");
+
+  document.getElementById("importCsvBtn").addEventListener("click", () => {
+    csvFormError.style.display = "none";
+    csvProgress.textContent = "";
+    document.getElementById("csvFileInput").value = "";
+    document.getElementById("csvTextInput").value = "";
+    csvModal.classList.add("show");
+  });
+  document.getElementById("csvCancelBtn").addEventListener("click", () => csvModal.classList.remove("show"));
+
+  document.getElementById("csvImportBtn").addEventListener("click", async () => {
+    csvFormError.style.display = "none";
+    csvProgress.textContent = "";
+
+    const fileInput = document.getElementById("csvFileInput");
+    let text = document.getElementById("csvTextInput").value.trim();
+
+    if (fileInput.files && fileInput.files[0]) {
+      text = (await fileInput.files[0].text()).trim();
+    }
+    if (!text) {
+      csvFormError.textContent = "Pilih file CSV atau paste isinya dulu.";
+      csvFormError.style.display = "block";
+      return;
+    }
+
+    const rows = parseCsv(text);
+    if (rows.length < 2) {
+      csvFormError.textContent = "CSV kosong atau tidak ada baris data (butuh minimal 1 baris header + 1 baris data).";
+      csvFormError.style.display = "block";
+      return;
+    }
+
+    const headers = rows[0].map((h) => h.trim().toLowerCase());
+    const dataRows = rows.slice(1);
+
+    await refreshCategoriesCache();
+    const categoryMap = {};
+    categoriesCache.forEach((c) => (categoryMap[c.name.toLowerCase()] = c.id));
+
+    let success = 0;
+    let failed = 0;
+
+    for (let i = 0; i < dataRows.length; i++) {
+      csvProgress.textContent = `Memproses ${i + 1} dari ${dataRows.length}... (${success} berhasil, ${failed} gagal)`;
+      const obj = {};
+      headers.forEach((h, idx) => (obj[h] = (dataRows[i][idx] || "").trim()));
+
+      if (!obj.title || !obj.embed_url) {
+        failed++;
+        continue;
+      }
+
+      let categoryId = null;
+      if (obj.category_name) {
+        const key = obj.category_name.toLowerCase();
+        if (categoryMap[key]) {
+          categoryId = categoryMap[key];
+        } else {
+          try {
+            const catRes = await Utils.api("/api/categories", { method: "POST", body: { name: obj.category_name }, needsCsrf: true });
+            categoryId = catRes.data.id;
+            categoryMap[key] = categoryId;
+          } catch {
+            categoryId = null;
+          }
+        }
+      }
+
+      try {
+        await Utils.api("/api/videos", {
+          method: "POST",
+          needsCsrf: true,
+          body: {
+            title: obj.title,
+            description: obj.description || "",
+            categoryId,
+            embedUrl: obj.embed_url,
+            thumbnailUrl: obj.thumbnail_url || "",
+            status: obj.status === "published" ? "published" : "draft",
+            publishDate: obj.publish_date || null,
+          },
+        });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+
+    csvProgress.textContent = `Selesai: ${success} berhasil, ${failed} gagal.`;
+    if (success > 0) loadVideosTable();
+  });
+
   // ---------- Categories table ----------
   async function loadCategoriesTable() {
     const tbody = document.getElementById("categoriesBody");
@@ -304,7 +532,7 @@
 
   async function loadAdsTable() {
     const tbody = document.getElementById("adsBody");
-    tbody.innerHTML = `<tr><td colspan="4">Memuat...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5">Memuat...</td></tr>`;
     try {
       const res = await Utils.api("/api/ads?admin=1");
       const items = res.data;
@@ -314,6 +542,7 @@
               (a) => `<tr>
           <td class="title-cell">${Utils.escapeHtml(a.name)}</td>
           <td>${Utils.escapeHtml(PLACEMENT_LABELS[a.placement] || a.placement)}</td>
+          <td>${(a.impressions || 0).toLocaleString("id-ID")}</td>
           <td>${a.enabled ? '<span class="badge published">Aktif</span>' : '<span class="badge draft">Nonaktif</span>'}</td>
           <td>
             <button class="icon-btn" data-edit-ad="${a.id}">Edit</button>
@@ -322,14 +551,14 @@
         </tr>`
             )
             .join("")
-        : `<tr><td colspan="4">Belum ada zona iklan. Klik "+ Tambah Zona Iklan" untuk mulai.</td></tr>`;
+        : `<tr><td colspan="5">Belum ada zona iklan. Klik "+ Tambah Zona Iklan" untuk mulai.</td></tr>`;
 
       tbody.querySelectorAll("[data-edit-ad]").forEach((btn) => btn.addEventListener("click", () => openAdModal(btn.dataset.editAd)));
       tbody.querySelectorAll("[data-delete-ad]").forEach((btn) =>
         btn.addEventListener("click", () => confirmAction(`Hapus zona iklan "${btn.dataset.name}"?`, () => deleteAd(btn.dataset.deleteAd)))
       );
     } catch {
-      tbody.innerHTML = `<tr><td colspan="4">Gagal memuat data iklan.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5">Gagal memuat data iklan.</td></tr>`;
     }
   }
 

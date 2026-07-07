@@ -26,7 +26,11 @@ const Ads = (() => {
       const payload = await res.json();
       const ads = (payload && payload.data) || [];
       if (!ads.length) return;
-      ads.forEach((ad) => injectCode(container, ad.code));
+      ads.forEach((ad) => {
+        injectCode(container, ad.code);
+        // Catat impresi (tidak perlu ditunggu, tidak boleh mengganggu tampilan)
+        fetch(`/api/ads/track/${ad.id}`, { method: "POST" }).catch(() => {});
+      });
     } catch {
       // Diamkan saja bila gagal memuat iklan — tidak boleh mengganggu konten utama
     }
@@ -63,6 +67,7 @@ const Ads = (() => {
 
       // Buka smartlink di tab baru, biarkan navigasi ke halaman kategori tetap berjalan normal
       window.open(url, "_blank", "noopener");
+      fetch(`/api/ads/track/${ad.id}`, { method: "POST" }).catch(() => {});
     });
   }
 

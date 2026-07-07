@@ -71,7 +71,10 @@
       <div class="panel">
         <div class="panel-title">
           <h2>Kelola Video</h2>
-          <button class="btn btn-primary" id="addVideoBtn">+ Tambah Video</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" id="importCsvBtn">Import CSV</button>
+            <button class="btn btn-primary" id="addVideoBtn">+ Tambah Video</button>
+          </div>
         </div>
         <div class="table-wrap">
           <table class="data-table">
@@ -111,7 +114,7 @@
         </p>
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>Nama</th><th>Penempatan</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Nama</th><th>Penempatan</th><th>Impresi</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody id="adsBody"></tbody>
           </table>
         </div>
@@ -121,16 +124,65 @@
     <!-- TAB: PENGATURAN -->
     <section class="tab-panel" id="tab-pengaturan" style="display:none;">
       <div class="panel">
-        <div class="panel-title"><h2>Pengaturan Akun</h2></div>
-        <p style="color:var(--text-dim);font-size:0.88rem;">
-          Login sebagai <strong id="settingsUsername">-</strong>.<br>
-          Untuk mengganti password admin, perbarui langsung lewat tabel <code>admins</code> di D1
-          (lihat README.md bagian keamanan) karena fitur ubah password belum tersedia di UI ini.
+        <div class="panel-title"><h2>Ganti Password</h2></div>
+        <p style="color:var(--text-dim);font-size:0.85rem;margin-top:-4px;">
+          Login sebagai <strong id="settingsUsername">-</strong>.
         </p>
-        <button class="btn" id="logoutBtn2">Logout dari semua perangkat</button>
+        <form id="changePasswordForm">
+          <div class="field">
+            <label for="currentPasswordInput">Password Saat Ini</label>
+            <input type="password" id="currentPasswordInput" required>
+          </div>
+          <div class="field">
+            <label for="newPasswordInput">Password Baru (minimal 8 karakter)</label>
+            <input type="password" id="newPasswordInput" required>
+          </div>
+          <div class="field-error" id="passwordFormError"></div>
+          <button type="submit" class="btn btn-primary">Ganti Password</button>
+        </form>
+        <button class="btn" id="logoutBtn2" style="margin-top:12px;">Logout dari perangkat ini</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">
+          <h2>Kelola Admin</h2>
+          <button class="btn btn-primary" id="addAdminBtn">+ Tambah Admin</button>
+        </div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Tambahkan admin lain yang bisa login ke dashboard ini. Tidak bisa menghapus akun yang
+          sedang login atau admin terakhir yang tersisa.
+        </p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Username</th><th>Dibuat</th><th>Aksi</th></tr></thead>
+            <tbody id="adminsBody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
   </main>
+</div>
+
+<!-- MODAL: ADD ADMIN FORM -->
+<div class="modal-overlay" id="addAdminModal">
+  <div class="modal-box" style="max-width:400px;">
+    <h2>Tambah Admin Baru</h2>
+    <form id="addAdminForm">
+      <div class="field">
+        <label for="newAdminUsername">Username</label>
+        <input type="text" id="newAdminUsername" required>
+      </div>
+      <div class="field">
+        <label for="newAdminPassword">Password (minimal 8 karakter)</label>
+        <input type="password" id="newAdminPassword" required>
+      </div>
+      <div class="field-error" id="addAdminFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="addAdminCancelBtn">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- MODAL: VIDEO FORM -->
@@ -178,6 +230,33 @@
         <button type="submit" class="btn btn-primary" id="videoSaveBtn">Simpan</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- MODAL: IMPORT CSV -->
+<div class="modal-overlay" id="csvModal">
+  <div class="modal-box">
+    <h2>Import Video dari CSV</h2>
+    <p style="color:var(--text-dim);font-size:0.82rem;">
+      Format kolom (baris pertama harus header persis ini):<br>
+      <code style="font-size:0.72rem;">title,description,category_name,embed_url,thumbnail_url,status,publish_date</code><br>
+      <code>status</code> diisi <code>draft</code> atau <code>published</code>. <code>category_name</code> dan
+      <code>publish_date</code> boleh dikosongkan. Kategori yang belum ada akan otomatis dibuat.
+    </p>
+    <div class="field">
+      <label for="csvFileInput">Pilih file .csv</label>
+      <input type="file" id="csvFileInput" accept=".csv,text/csv">
+    </div>
+    <div class="field">
+      <label for="csvTextInput">Atau paste isi CSV langsung di sini</label>
+      <textarea id="csvTextInput" style="min-height:120px;font-family:monospace;font-size:0.78rem;" placeholder="title,description,category_name,embed_url,thumbnail_url,status,publish_date"></textarea>
+    </div>
+    <div id="csvProgress" style="font-size:0.82rem;color:var(--text-dim);margin-bottom:8px;"></div>
+    <div class="field-error" id="csvFormError"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="csvCancelBtn">Batal</button>
+      <button type="button" class="btn btn-primary" id="csvImportBtn">Mulai Import</button>
+    </div>
   </div>
 </div>
 
