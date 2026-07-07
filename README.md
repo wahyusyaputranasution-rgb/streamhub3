@@ -244,7 +244,34 @@ Adsterra Anda sendiri) — jangan tempel kode dari sumber yang tidak jelas.
 
 ---
 
-## 12. Pengembangan Lokal
+## 13. Kunci PIN Aplikasi (App Lock)
+
+Seluruh aplikasi (semua halaman publik + admin) dilindungi layar kunci PIN yang muncul setiap
+kali aplikasi dibuka dari awal (tab/sesi baru).
+
+**Cara kerja:**
+- Saat pertama kali dibuka, pengunjung akan diminta membuat PIN 4 digit + 1 pertanyaan keamanan
+  (untuk jaga-jaga kalau PIN lupa).
+- Setelah itu, setiap kali aplikasi dibuka ulang (mis. lewat ikon di homescreen), akan muncul
+  layar minta PIN sebelum bisa melihat konten apa pun.
+- Selama sesi masih terbuka (belum ditutup total), berpindah antar halaman tidak akan
+  meminta PIN berulang kali.
+- Lupa PIN bisa direset lewat pertanyaan keamanan yang dibuat di awal.
+
+**Penting — batasan keamanan:** PIN dan hash-nya tersimpan di penyimpanan browser/perangkat itu
+sendiri (localStorage), bukan di server. Ini cukup untuk mencegah orang lain yang meminjam HP
+Anda membuka aplikasi ini begitu saja, tapi **bukan pengganti keamanan tingkat sistem operasi
+atau aplikasi native (.apk)** — pengguna yang cukup teknis (mis. lewat DevTools browser) masih
+bisa melewatinya. Untuk konten yang benar-benar sensitif, tetap andalkan proteksi login admin
+di sisi server (`/api/auth/*`), yang jauh lebih kuat karena divalidasi di backend.
+
+**Reset PIN paksa (kalau perlu, mis. lupa jawaban keamanan juga):** pengguna bisa menghapus
+data situs lewat Setelan Aplikasi di HP (Settings → Apps → StreamHub / Chrome → Storage →
+Clear Data), lalu PIN akan diminta dibuat ulang dari awal.
+
+---
+
+## 14. Pengembangan Lokal
 
 ```bash
 npx wrangler dev
