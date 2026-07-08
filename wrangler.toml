@@ -1,0 +1,26 @@
+name = "streamhubvideoplay1"
+main = "src/index.js"
+compatibility_date = "2026-07-05"
+compatibility_flags = ["nodejs_compat"]
+
+# Folder berisi semua file statis (HTML/CSS/JS) yang disajikan langsung
+# oleh Cloudflare. Worker (src/index.js) hanya dipanggil untuk request
+# yang tidak cocok dengan file statis, yaitu /api/* dan /sitemap.xml.
+[assets]
+directory = "public"
+binding = "ASSETS"
+
+# D1 Database binding.
+# Ambil "database_id" dari: Cloudflare Dashboard -> Workers & Pages -> D1
+# -> klik database "streaming_db" -> salin Database ID di halaman Overview-nya.
+[[d1_databases]]
+binding = "DB"
+database_name = "streaming_db"
+database_id = "5d5d5e0d-094c-4ac1-a837-9f088ce70141"
+
+[vars]
+SITE_NAME = "StreamHub"
+SITE_URL = "https://streamhubvideoplay1.jambrongv2.workers.dev"
+VAPID_PUBLIC_KEY = "BJYUy-NRWIg-0BuLuwHfLrmWFx6sa04XXqwibvEInvaZPnAf8A4RYHONWwFgmBs_i1LksHjdhhGjT04Ej_PZioA"
+VAPID_PRIVATE_KEY_JWK = "{\"key_ops\":[\"sign\"],\"ext\":true,\"kty\":\"EC\",\"x\":\"lhTL41FYiD7QG4u7Ad8uuZYXHqxrThderCJu8Qie9pk\",\"y\":\"PnAf8A4RYHONWwFgmBs_i1LksHjdhhGjT04Ej_PZioA\",\"crv\":\"P-256\",\"d\":\"l_iTKqDDLZacTYIhEum5WuUyA2bBbkD-QA1IMs-GSKY\"}"
+VAPID_SUBJECT = "mailto:admin@example.com"
