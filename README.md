@@ -430,7 +430,46 @@ secara teknis tetap web app, bukan aplikasi native Android.
 
 ---
 
-## 23. Pengembangan Lokal
+## 24. Perbaikan PIN: Hanya Aktif Kalau Aplikasi Ter-install
+
+Sebelumnya, kunci PIN muncul untuk **siapa saja** yang membuka situs, termasuk teman yang cuma
+buka link video yang Anda bagikan lewat browser biasa — ini sudah diperbaiki.
+
+**Sekarang:** PIN **hanya** muncul kalau situs dibuka dalam mode "terinstall" (dari ikon di
+homescreen setelah di-install sebagai PWA). Kalau dibuka lewat tab browser biasa (link yang
+dibagikan ke teman, hasil pencarian Google, dll), **tidak ada PIN sama sekali** — langsung bisa
+nonton seperti situs normal.
+
+Ini cocok untuk skenario: Anda install aplikasinya sendiri di HP (dikunci PIN, privasi Anda),
+sementara video yang Anda bagikan ke orang lain tetap bisa diakses bebas tanpa PIN.
+
+---
+
+## 25. Pengaturan Website Terhubung ke Dashboard (Customer Service)
+
+Sekarang ada sistem **Pengaturan Website** generik yang bisa diubah lewat dashboard tanpa perlu
+edit kode atau deploy ulang — dimulai dengan pengaturan tombol Customer Service.
+
+**Cara pakai:**
+1. Login dashboard → tab **Pengaturan** → bagian **"Pengaturan Website"**
+2. Centang **"Tampilkan tombol Customer Service mengambang"**
+3. Isi **Link Customer Service** — bisa link WhatsApp (`https://wa.me/62812xxxxxxx`), Telegram,
+   atau link kontak apa pun
+4. Isi **Label** (opsional) — teks kecil yang muncul di sebelah tombol, mis. "Butuh bantuan?"
+5. Simpan
+
+Tombol mengambang otomatis muncul di pojok kanan bawah semua halaman publik (Home, Watch, Search,
+Kategori), langsung terhubung ke pengaturan di dashboard — matikan/ubah link kapan saja tanpa
+deploy ulang.
+
+**Migrasi database yang diperlukan** (aman, tidak menyentuh tabel lain):
+```bash
+wrangler d1 execute streaming_db --remote --file=./database/migration_settings.sql
+```
+
+---
+
+## 26. Pengembangan Lokal
 
 ```bash
 npx wrangler dev

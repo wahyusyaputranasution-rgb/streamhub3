@@ -111,6 +111,14 @@ CREATE TABLE IF NOT EXISTS devices (
 );
 
 CREATE INDEX IF NOT EXISTS idx_devices_last_seen ON devices(last_seen);
+
+-- Pengaturan situs yang bisa diubah lewat dashboard admin (key-value generik),
+-- mis. link customer service, label tombol, dll — tanpa perlu edit kode/deploy ulang.
+CREATE TABLE IF NOT EXISTS settings (
+  key         TEXT PRIMARY KEY,
+  value       TEXT NOT NULL DEFAULT '',
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
 CREATE INDEX IF NOT EXISTS idx_videos_status       ON videos(status);
 CREATE INDEX IF NOT EXISTS idx_videos_category     ON videos(category_id);
 CREATE INDEX IF NOT EXISTS idx_videos_views        ON videos(views DESC);

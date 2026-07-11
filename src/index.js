@@ -36,6 +36,9 @@ import {
   getUpload,
   upsertDevice,
   getDeviceStats,
+  getAllSettings,
+  getPublicSettings,
+  setSetting,
 } from "../lib/db.js";
 import { normalizeEmbedUrl } from "../lib/embed.js";
 import { sendPushNotification } from "../lib/webpush.js";
@@ -574,6 +577,45 @@ async function handleTrackStats(request, env) {
   return ok(stats);
 }
 
+async function handleSettingsCollection(request, env) {
+  if (request.method === "GET") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    const settings = await getAllSettings(env.DB);
+    return ok(settings);
+  }
+
+  if (request.method === "PUT") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+    const body = await request.json().catch(() => ({}));
+    const settings = body.settings || {};
+    const keys = Object.keys(settings);
+    if (!keys.length) return fail("Tidak ada pengaturan yang dikirim");
+
+    for (const key of keys) {
+      const cleanKey = String(key).trim().slice(0, 100);
+      const cleanValue = String(settings[key] || "").trim().slice(0, 2000);
+      if (cleanKey === "cs_link" && cleanValue && !isSafeUrl(cleanValue)) {
+        return fail("Link Customer Service tidak valid (harus URL http/https, mis. https://wa.me/62812xxxx)");
+      }
+      await setSetting(env.DB, cleanKey, cleanValue);
+    }
+
+    return ok(null, { message: "Pengaturan berhasil disimpan" });
+  }
+
+  return fail("Method tidak diizinkan", 405);
+}
+
+async function handlePublicSettings(request, env) {
+  if (request.method !== "GET") return fail("Method tidak diizinkan", 405);
+  const settings = await getPublicSettings(env.DB);
+  return ok(settings);
+}
+
 // ================= ADS =================
 
 const ALLOWED_PLACEMENTS = [
@@ -781,6 +823,10 @@ export default {
         response = await handleTrackHeartbeat(request, env);
       } else if (path === "/api/track/stats") {
         response = await handleTrackStats(request, env);
+      } else if (path === "/api/settings") {
+        response = await handleSettingsCollection(request, env);
+      } else if (path === "/api/settings/public") {
+        response = await handlePublicSettings(request, env);
       } else if (path === "/api/videos") {
         response = await handleVideosCollection(request, env, url);
       } else if (/^\/api\/videos\/\d+$/.test(path)) {

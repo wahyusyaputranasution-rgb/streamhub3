@@ -10,6 +10,14 @@
 // pengganti keamanan tingkat OS/APK asli.
 
 (() => {
+  // PIN HANYA berlaku kalau situs dibuka dalam mode "terinstall" (dari ikon
+  // homescreen). Kalau dibuka lewat tab browser biasa (mis. link video yang
+  // dibagikan ke teman), tidak ada kunci PIN sama sekali.
+  function isRunningInstalled() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  }
+  if (!isRunningInstalled()) return;
+
   const PIN_HASH_KEY = "applock_pin_hash";
   const RECOVERY_Q_KEY = "applock_recovery_q";
   const RECOVERY_A_HASH_KEY = "applock_recovery_a_hash";

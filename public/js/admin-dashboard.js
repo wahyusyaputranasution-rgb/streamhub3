@@ -50,7 +50,10 @@
     if (tab === "video") loadVideosTable();
     if (tab === "kategori") loadCategoriesTable();
     if (tab === "iklan") loadAdsTable();
-    if (tab === "pengaturan") loadAdminsTable();
+    if (tab === "pengaturan") {
+      loadAdminsTable();
+      loadSiteSettings();
+    }
   }
 
   document.querySelectorAll(".admin-nav a").forEach((a) => {
@@ -71,6 +74,39 @@
   }
   document.getElementById("logoutBtn").addEventListener("click", doLogout);
   document.getElementById("logoutBtn2").addEventListener("click", doLogout);
+
+  // ---------- Pengaturan Website (Customer Service, dll) ----------
+  const siteSettingsForm = document.getElementById("siteSettingsForm");
+  const siteSettingsError = document.getElementById("siteSettingsError");
+
+  async function loadSiteSettings() {
+    try {
+      const res = await Utils.api("/api/settings");
+      const s = res.data;
+      document.getElementById("csEnabledInput").checked = s.cs_enabled === "1";
+      document.getElementById("csLinkInput").value = s.cs_link || "";
+      document.getElementById("csLabelInput").value = s.cs_label || "";
+    } catch {
+      // Diamkan, form tetap kosong kalau gagal
+    }
+  }
+
+  siteSettingsForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    siteSettingsError.style.display = "none";
+    const settings = {
+      cs_enabled: document.getElementById("csEnabledInput").checked ? "1" : "0",
+      cs_link: document.getElementById("csLinkInput").value.trim(),
+      cs_label: document.getElementById("csLabelInput").value.trim(),
+    };
+    try {
+      await Utils.api("/api/settings", { method: "PUT", body: { settings }, needsCsrf: true });
+      showToast("Pengaturan disimpan");
+    } catch (err) {
+      siteSettingsError.textContent = err.message || "Gagal menyimpan pengaturan";
+      siteSettingsError.style.display = "block";
+    }
+  });
 
   // ---------- Kirim Push Notification ----------
   const pushForm = document.getElementById("pushForm");
