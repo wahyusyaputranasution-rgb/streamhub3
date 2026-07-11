@@ -90,6 +90,15 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   auth         TEXT NOT NULL,
   created_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Gambar thumbnail yang diupload langsung dari dashboard (disimpan sebagai base64 di D1,
+-- karena project ini sengaja tidak memakai Cloudflare R2 / storage file terpisah)
+CREATE TABLE IF NOT EXISTS uploads (
+  id            TEXT PRIMARY KEY,
+  content_type  TEXT NOT NULL,
+  data          TEXT NOT NULL,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
 CREATE INDEX IF NOT EXISTS idx_videos_status       ON videos(status);
 CREATE INDEX IF NOT EXISTS idx_videos_category     ON videos(category_id);
 CREATE INDEX IF NOT EXISTS idx_videos_views        ON videos(views DESC);

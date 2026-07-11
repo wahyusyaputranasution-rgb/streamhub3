@@ -244,6 +244,12 @@
       <div class="field">
         <label for="videoThumbInput">Link Thumbnail</label>
         <input type="url" id="videoThumbInput" placeholder="https://image.tmdb.org/t/p/w500/xxxxx.jpg">
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <label for="thumbFileInput" class="btn" style="cursor:pointer;margin:0;">Upload dari HP</label>
+          <input type="file" id="thumbFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;">
+          <span id="thumbUploadStatus" style="font-size:0.78rem;color:var(--text-dim);"></span>
+        </div>
+        <img id="thumbPreview" style="max-width:160px;margin-top:8px;border-radius:8px;display:none;">
       </div>
       <div class="field">
         <label for="videoPublishInput">Tanggal Publish (opsional)</label>

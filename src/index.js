@@ -32,6 +32,8 @@ import {
   incrementAdImpression,
   listAdmins,
   countAdmins,
+  saveUpload,
+  getUpload,
 } from "../lib/db.js";
 import { normalizeEmbedUrl } from "../lib/embed.js";
 import { sendPushNotification } from "../lib/webpush.js";
@@ -504,6 +506,50 @@ async function handlePushSend(request, env) {
   return ok({ sent, failed, total: subscriptions.length }, { message: `Notifikasi terkirim ke ${sent} dari ${subscriptions.length} pengunjung` });
 }
 
+async function handleUploadCreate(request, env) {
+  if (request.method !== "POST") return fail("Method tidak diizinkan", 405);
+  const session = await requireAuth(request, env.DB);
+  if (!session) return unauthorized();
+  if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+  const body = await request.json().catch(() => ({}));
+  const contentType = (body.contentType || "").trim();
+  const base64Data = (body.data || "").trim();
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (!allowedTypes.includes(contentType)) return fail("Tipe file tidak didukung. Gunakan JPG, PNG, WEBP, atau GIF.");
+  if (!base64Data) return fail("Data gambar kosong");
+
+  let byteLength;
+  try {
+    byteLength = atob(base64Data).length;
+  } catch {
+    return fail("Data gambar tidak valid");
+  }
+  const MAX_BYTES = 800 * 1024; // 800KB, cukup untuk thumbnail yang sudah dikompres di sisi client
+  if (byteLength > MAX_BYTES) return fail("Ukuran gambar terlalu besar (maks 800KB setelah kompresi otomatis)");
+
+  const id = crypto.randomUUID();
+  await saveUpload(env.DB, id, contentType, base64Data);
+
+  const absoluteUrl = new URL(`/uploads/${id}`, request.url).toString();
+  return ok({ url: absoluteUrl }, { message: "Gambar berhasil diupload" });
+}
+
+async function handleUploadServe(env, id) {
+  const upload = await getUpload(env.DB, id);
+  if (!upload) return new Response("Not found", { status: 404 });
+
+  const binary = atob(upload.data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+  return new Response(bytes, {
+    status: 200,
+    headers: { "Content-Type": upload.content_type, "Cache-Control": "public, max-age=31536000, immutable" },
+  });
+}
+
 // ================= ADS =================
 
 const ALLOWED_PLACEMENTS = [
@@ -679,6 +725,9 @@ export default {
 
       if (path === "/sitemap.xml") {
         response = await handleSitemap(env);
+      } else if (/^\/uploads\/[a-zA-Z0-9-]+$/.test(path)) {
+        const id = path.replace("/uploads/", "");
+        response = await handleUploadServe(env, id);
       } else if (path === "/api/auth/setup") {
         response = await handleAuthSetup(request, env);
       } else if (path === "/api/auth/login") {
@@ -702,6 +751,8 @@ export default {
         response = await handlePushUnsubscribe(request, env);
       } else if (path === "/api/push/send") {
         response = await handlePushSend(request, env);
+      } else if (path === "/api/uploads") {
+        response = await handleUploadCreate(request, env);
       } else if (path === "/api/videos") {
         response = await handleVideosCollection(request, env, url);
       } else if (/^\/api\/videos\/\d+$/.test(path)) {

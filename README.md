@@ -349,7 +349,37 @@ wrangler d1 execute streaming_db --remote --file=./database/migration_push.sql
 
 ---
 
-## 18. Pengembangan Lokal
+## 19. Upload Thumbnail dari Dashboard
+
+Selain menempel URL gambar, sekarang admin juga bisa **upload foto langsung dari HP** untuk
+dijadikan thumbnail video.
+
+**Cara pakai:**
+1. Di form Tambah/Edit Video, klik tombol **"Upload dari HP"** di bawah kolom Link Thumbnail
+2. Pilih foto dari galeri
+3. Foto otomatis dikompres (dikecilkan ke maks lebar 640px, kualitas JPEG 75%) di HP sebelum
+   dikirim, supaya hemat kuota & ruang penyimpanan
+4. Setelah berhasil, kolom Link Thumbnail otomatis terisi dengan URL upload-nya, dan muncul preview
+
+**Kenapa disimpan di D1, bukan R2:** sesuai desain awal project ini (tanpa Cloudflare R2), gambar
+yang diupload disimpan sebagai data di database D1 (tabel `uploads`), lalu disajikan lewat URL
+`/uploads/<id>`. Ini praktis dan tidak butuh binding tambahan, tapi ada batasannya:
+
+- **Maksimal 800KB per gambar** (setelah kompresi otomatis) — cukup untuk thumbnail biasa
+- Cocok untuk jumlah video yang wajar (puluhan-ratusan). Untuk situs dengan **ribuan** video,
+  pertimbangkan tetap pakai URL eksternal (imgur, TMDB, dll) supaya tidak membebani kuota
+  penyimpanan D1 (gratis hingga 5GB per database di paket Cloudflare Free)
+- Upload lewat form tetap **opsional** — menempel URL manual seperti biasa masih bisa dipakai
+  kapan saja, keduanya saling melengkapi
+
+**Migrasi database yang diperlukan** (aman, tidak menyentuh tabel lain):
+```bash
+wrangler d1 execute streaming_db --remote --file=./database/migration_uploads.sql
+```
+
+---
+
+## 20. Pengembangan Lokal
 
 ```bash
 npx wrangler dev

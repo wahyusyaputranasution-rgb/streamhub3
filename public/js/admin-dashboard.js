@@ -269,11 +269,67 @@
   document.getElementById("addVideoBtn").addEventListener("click", () => openVideoModal(null));
   document.getElementById("videoCancelBtn").addEventListener("click", () => videoModal.classList.remove("show"));
 
+  // ---------- Upload thumbnail (kompresi otomatis di HP sebelum dikirim) ----------
+  const thumbFileInput = document.getElementById("thumbFileInput");
+  const thumbUploadStatus = document.getElementById("thumbUploadStatus");
+  const thumbPreview = document.getElementById("thumbPreview");
+
+  function compressImage(file, maxWidth = 640, quality = 0.75) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = () => {
+        img.onload = () => {
+          const scale = Math.min(1, maxWidth / img.width);
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL("image/jpeg", quality);
+          resolve(dataUrl);
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  thumbFileInput.addEventListener("change", async () => {
+    const file = thumbFileInput.files[0];
+    if (!file) return;
+
+    thumbUploadStatus.textContent = "Mengompres & mengupload...";
+    try {
+      const dataUrl = await compressImage(file);
+      const [meta, base64Data] = dataUrl.split(",");
+      const contentType = meta.match(/data:(.*);base64/)[1];
+
+      const res = await Utils.api("/api/uploads", {
+        method: "POST",
+        needsCsrf: true,
+        body: { contentType, data: base64Data },
+      });
+
+      document.getElementById("videoThumbInput").value = res.data.url;
+      thumbPreview.src = res.data.url;
+      thumbPreview.style.display = "block";
+      thumbUploadStatus.textContent = "Berhasil diupload ✓";
+    } catch (err) {
+      thumbUploadStatus.textContent = err.message || "Gagal upload gambar";
+    }
+  });
+
   async function openVideoModal(id) {
     videoFormError.style.display = "none";
     videoForm.reset();
     document.getElementById("videoId").value = id || "";
     document.getElementById("videoModalTitle").textContent = id ? "Edit Video" : "Tambah Video";
+    thumbUploadStatus.textContent = "";
+    thumbPreview.style.display = "none";
+    thumbFileInput.value = "";
 
     if (id) {
       try {
@@ -285,6 +341,10 @@
         document.getElementById("videoStatusSelect").value = v.status;
         document.getElementById("videoEmbedInput").value = v.embed_url;
         document.getElementById("videoThumbInput").value = v.thumbnail_url || "";
+        if (v.thumbnail_url) {
+          thumbPreview.src = v.thumbnail_url;
+          thumbPreview.style.display = "block";
+        }
         if (v.publish_date) {
           document.getElementById("videoPublishInput").value = v.publish_date.slice(0, 16);
         }
