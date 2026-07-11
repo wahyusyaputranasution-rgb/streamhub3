@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Admin - StreamHub</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="/admin/manifest.json">
+<meta name="theme-color" content="#0b0c10">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<script src="/js/applock.js"></script>
+
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <div class="logo">Stream<span style="color:var(--accent);">Hub</span></div>
+    <nav class="admin-nav" id="sidebarNav">
+      <a href="#dashboard" data-tab="dashboard" class="active">Dashboard</a>
+      <a href="#video" data-tab="video">Video</a>
+      <a href="#kategori" data-tab="kategori">Kategori</a>
+      <a href="#iklan" data-tab="iklan">Iklan</a>
+      <a href="#pengaturan" data-tab="pengaturan">Pengaturan</a>
+      <button class="logout-btn" id="logoutBtn">Logout</button>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1 id="topbarTitle">Dashboard</h1>
+      <span id="adminUsername" style="color:var(--text-dim);font-size:0.85rem;"></span>
+    </div>
+
+    <div class="mobile-tabs" id="mobileTabs">
+      <button data-tab="dashboard" class="active">Dashboard</button>
+      <button data-tab="video">Video</button>
+      <button data-tab="kategori">Kategori</button>
+      <button data-tab="iklan">Iklan</button>
+      <button data-tab="pengaturan">Pengaturan</button>
+    </div>
+
+    <!-- TAB: DASHBOARD -->
+    <section class="tab-panel" id="tab-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="num" id="statTotalVideos">-</div><div class="label">Total Video</div></div>
+        <div class="stat-card"><div class="num" id="statTotalViews">-</div><div class="label">Total View</div></div>
+        <div class="stat-card"><div class="num" id="statTotalCategories">-</div><div class="label">Total Kategori</div></div>
+        <div class="stat-card"><div class="num" id="statPublished">-</div><div class="label">Published</div></div>
+        <div class="stat-card"><div class="num" id="statDraft">-</div><div class="label">Draft</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">
+          <h2>Pengguna & Perangkat</h2>
+          <span style="font-size:0.75rem;color:var(--text-dim);">Update otomatis tiap 10 detik</span>
+        </div>
+        <div class="stat-grid" style="margin-bottom:0;">
+          <div class="stat-card"><div class="num" id="statTotalDevices">-</div><div class="label">Total Perangkat</div></div>
+          <div class="stat-card"><div class="num" id="statInstalled">-</div><div class="label">Terinstall sebagai App</div></div>
+          <div class="stat-card"><div class="num" id="statOnline" style="color:#2ecc71;">-</div><div class="label">🟢 Online Sekarang</div></div>
+          <div class="stat-card"><div class="num" id="statOffline" style="color:var(--text-dim);">-</div><div class="label">⚪ Offline</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><h2>Video Terbaru</h2></div>
+        <div class="table-wrap">
+          <table class="data-table"><thead><tr><th>Judul</th><th>Status</th><th>View</th><th>Dibuat</th></tr></thead>
+          <tbody id="latestVideosBody"></tbody></table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><h2>Video Populer</h2></div>
+        <div class="table-wrap">
+          <table class="data-table"><thead><tr><th>Judul</th><th>Status</th><th>View</th></tr></thead>
+          <tbody id="popularVideosBody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: VIDEO -->
+    <section class="tab-panel" id="tab-video" style="display:none;">
+      <div class="panel">
+        <div class="panel-title">
+          <h2>Kelola Video</h2>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" id="importCsvBtn">Import CSV</button>
+            <button class="btn btn-primary" id="addVideoBtn">+ Tambah Video</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Judul</th><th>Kategori</th><th>Status</th><th>View</th><th>Publish</th><th>Aksi</th></tr></thead>
+            <tbody id="videosBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: KATEGORI -->
+    <section class="tab-panel" id="tab-kategori" style="display:none;">
+      <div class="panel">
+        <div class="panel-title">
+          <h2>Kelola Kategori</h2>
+          <button class="btn btn-primary" id="addCategoryBtn">+ Tambah Kategori</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Nama</th><th>Slug</th><th>Jumlah Video</th><th>Aksi</th></tr></thead>
+            <tbody id="categoriesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: IKLAN -->
+    <section class="tab-panel" id="tab-iklan" style="display:none;">
+      <div class="panel">
+        <div class="panel-title">
+          <h2>Kelola Iklan (Adsterra dkk)</h2>
+          <button class="btn btn-primary" id="addAdBtn">+ Tambah Zona Iklan</button>
+        </div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Tempel kode/script iklan dari dashboard provider (mis. Adsterra) ke sini, pilih lokasi
+          tayangnya, lalu simpan. Iklan langsung tampil di situs tanpa perlu ubah kode.
+        </p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Nama</th><th>Penempatan</th><th>Impresi</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="adsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: PENGATURAN -->
+    <section class="tab-panel" id="tab-pengaturan" style="display:none;">
+      <div class="panel">
+        <div class="panel-title"><h2>Kirim Push Notification</h2></div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Kirim notifikasi ke semua pengunjung yang sudah mengaktifkan notifikasi di HP mereka
+          (termasuk saat aplikasi sedang tertutup).
+        </p>
+        <form id="pushForm">
+          <div class="field">
+            <label for="pushTitleInput">Judul Notifikasi</label>
+            <input type="text" id="pushTitleInput" placeholder="Video Baru!" required>
+          </div>
+          <div class="field">
+            <label for="pushBodyInput">Isi Notifikasi</label>
+            <input type="text" id="pushBodyInput" placeholder="Aksi Seru Terbaru sudah tayang, tonton sekarang!" required>
+          </div>
+          <div class="field">
+            <label for="pushUrlInput">Buka halaman apa saat notifikasi diklik? (opsional)</label>
+            <input type="text" id="pushUrlInput" placeholder="/watch/?slug=aksi-seru-terbaru">
+          </div>
+          <div class="field-error" id="pushFormError"></div>
+          <div id="pushResult" style="font-size:0.82rem;color:var(--text-dim);margin-bottom:8px;"></div>
+          <button type="submit" class="btn btn-primary">Kirim Notifikasi</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><h2>Ganti Password</h2></div>
+        <p style="color:var(--text-dim);font-size:0.85rem;margin-top:-4px;">
+          Login sebagai <strong id="settingsUsername">-</strong>.
+        </p>
+        <form id="changePasswordForm">
+          <div class="field">
+            <label for="currentPasswordInput">Password Saat Ini</label>
+            <input type="password" id="currentPasswordInput" required>
+          </div>
+          <div class="field">
+            <label for="newPasswordInput">Password Baru (minimal 8 karakter)</label>
+            <input type="password" id="newPasswordInput" required>
+          </div>
+          <div class="field-error" id="passwordFormError"></div>
+          <button type="submit" class="btn btn-primary">Ganti Password</button>
+        </form>
+        <button class="btn" id="logoutBtn2" style="margin-top:12px;">Logout dari perangkat ini</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">
+          <h2>Kelola Admin</h2>
+          <button class="btn btn-primary" id="addAdminBtn">+ Tambah Admin</button>
+        </div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Tambahkan admin lain yang bisa login ke dashboard ini. Tidak bisa menghapus akun yang
+          sedang login atau admin terakhir yang tersisa.
+        </p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Username</th><th>Dibuat</th><th>Aksi</th></tr></thead>
+            <tbody id="adminsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- MODAL: ADD ADMIN FORM -->
+<div class="modal-overlay" id="addAdminModal">
+  <div class="modal-box" style="max-width:400px;">
+    <h2>Tambah Admin Baru</h2>
+    <form id="addAdminForm">
+      <div class="field">
+        <label for="newAdminUsername">Username</label>
+        <input type="text" id="newAdminUsername" required>
+      </div>
+      <div class="field">
+        <label for="newAdminPassword">Password (minimal 8 karakter)</label>
+        <input type="password" id="newAdminPassword" required>
+      </div>
+      <div class="field-error" id="addAdminFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="addAdminCancelBtn">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: VIDEO FORM -->
+<div class="modal-overlay" id="videoModal">
+  <div class="modal-box">
+    <h2 id="videoModalTitle">Tambah Video</h2>
+    <form id="videoForm">
+      <input type="hidden" id="videoId">
+      <div class="field">
+        <label for="videoTitle">Judul</label>
+        <input type="text" id="videoTitleInput" required>
+      </div>
+      <div class="field">
+        <label for="videoDescInput">Deskripsi</label>
+        <textarea id="videoDescInput"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label for="videoCategorySelect">Kategori</label>
+          <select id="videoCategorySelect"><option value="">Tanpa Kategori</option></select>
+        </div>
+        <div class="field">
+          <label for="videoStatusSelect">Status</label>
+          <select id="videoStatusSelect">
+            <option value="draft">Draft</option>
+            <option value="published">Publish</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="videoEmbedInput">Link Embed</label>
+        <input type="url" id="videoEmbedInput" placeholder="https://www.youtube.com/watch?v=... atau https://domain.com/e/xxxxx" required>
+      </div>
+      <div class="field">
+        <label for="videoThumbInput">Link Thumbnail</label>
+        <input type="url" id="videoThumbInput" placeholder="https://image.tmdb.org/t/p/w500/xxxxx.jpg">
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <label for="thumbFileInput" class="btn" style="cursor:pointer;margin:0;">Upload dari HP</label>
+          <input type="file" id="thumbFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;">
+          <span id="thumbUploadStatus" style="font-size:0.78rem;color:var(--text-dim);"></span>
+        </div>
+        <img id="thumbPreview" style="max-width:160px;margin-top:8px;border-radius:8px;display:none;">
+      </div>
+      <div class="field">
+        <label for="videoPublishInput">Tanggal Publish (opsional)</label>
+        <input type="datetime-local" id="videoPublishInput">
+      </div>
+      <div class="field-error" id="videoFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="videoCancelBtn">Batal</button>
+        <button type="submit" class="btn btn-primary" id="videoSaveBtn">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: IMPORT CSV -->
+<div class="modal-overlay" id="csvModal">
+  <div class="modal-box">
+    <h2>Import Video dari CSV</h2>
+    <p style="color:var(--text-dim);font-size:0.82rem;">
+      Format kolom (baris pertama harus header persis ini):<br>
+      <code style="font-size:0.72rem;">title,description,category_name,embed_url,thumbnail_url,status,publish_date</code><br>
+      <code>status</code> diisi <code>draft</code> atau <code>published</code>. <code>category_name</code> dan
+      <code>publish_date</code> boleh dikosongkan. Kategori yang belum ada akan otomatis dibuat.
+    </p>
+    <div class="field">
+      <label for="csvFileInput">Pilih file .csv</label>
+      <input type="file" id="csvFileInput" accept=".csv,text/csv">
+    </div>
+    <div class="field">
+      <label for="csvTextInput">Atau paste isi CSV langsung di sini</label>
+      <textarea id="csvTextInput" style="min-height:120px;font-family:monospace;font-size:0.78rem;" placeholder="title,description,category_name,embed_url,thumbnail_url,status,publish_date"></textarea>
+    </div>
+    <div id="csvProgress" style="font-size:0.82rem;color:var(--text-dim);margin-bottom:8px;"></div>
+    <div class="field-error" id="csvFormError"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="csvCancelBtn">Batal</button>
+      <button type="button" class="btn btn-primary" id="csvImportBtn">Mulai Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CATEGORY FORM -->
+<div class="modal-overlay" id="categoryModal">
+  <div class="modal-box" style="max-width:400px;">
+    <h2 id="categoryModalTitle">Tambah Kategori</h2>
+    <form id="categoryForm">
+      <input type="hidden" id="categoryId">
+      <div class="field">
+        <label for="categoryNameInput">Nama Kategori</label>
+        <input type="text" id="categoryNameInput" required>
+      </div>
+      <div class="field-error" id="categoryFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="categoryCancelBtn">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: AD ZONE FORM -->
+<div class="modal-overlay" id="adModal">
+  <div class="modal-box">
+    <h2 id="adModalTitle">Tambah Zona Iklan</h2>
+    <form id="adForm">
+      <input type="hidden" id="adId">
+      <div class="field">
+        <label for="adNameInput">Nama Zona (untuk referensi Anda sendiri)</label>
+        <input type="text" id="adNameInput" placeholder="Contoh: Adsterra Banner Home" required>
+      </div>
+      <div class="field">
+        <label for="adPlacementSelect">Penempatan</label>
+        <select id="adPlacementSelect" required>
+          <option value="global">Global (semua halaman) - cocok untuk Popunder/Social Bar</option>
+          <option value="home_top">Home - atas (sebelum Video Terbaru)</option>
+          <option value="home_grid">Home - tengah (antara Video Terbaru & Populer)</option>
+          <option value="watch_below_player">Watch - di bawah player</option>
+          <option value="watch_sidebar">Watch - sidebar (atas Video Terkait)</option>
+          <option value="category_top">Kategori - atas grid video (banner biasa)</option>
+          <option value="category_click">Kategori - Smartlink saat diklik (buka tab baru)</option>
+          <option value="search_top">Search - atas hasil pencarian</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="adCodeInput">Kode Iklan (paste script dari Adsterra di sini)</label>
+        <textarea id="adCodeInput" style="min-height:140px;font-family:monospace;font-size:0.8rem;" placeholder="<script type=&quot;text/javascript&quot;>...</script>" required></textarea>
+        <div style="color:var(--text-dim);font-size:0.78rem;margin-top:6px;">
+          Untuk penempatan <strong>"Kategori - Smartlink saat diklik"</strong>, isi kolom ini
+          dengan <strong>URL smartlink saja</strong> (contoh: <code>https://contoh.com/abc123</code>),
+          bukan kode script.
+        </div>
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="adEnabledInput" style="width:auto;" checked>
+          <span>Aktifkan iklan ini</span>
+        </label>
+      </div>
+      <div class="field-error" id="adFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="adCancelBtn">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRM DELETE -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box" style="max-width:380px;">
+    <h2 id="confirmTitle">Hapus data?</h2>
+    <p id="confirmMessage" style="color:var(--text-dim);font-size:0.88rem;"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="confirmCancelBtn">Batal</button>
+      <button type="button" class="btn btn-primary" id="confirmOkBtn" style="background:var(--accent);border-color:var(--accent);">Ya, Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/utils.js"></script>
+<script src="/js/admin-dashboard.js"></script>
+<script src="/js/admin-pwa.js"></script>
+</body>
+</html>

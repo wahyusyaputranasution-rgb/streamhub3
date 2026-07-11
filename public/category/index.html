@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Kategori - StreamHub</title>
+<meta name="description" id="pageDesc" content="Jelajahi video berdasarkan kategori di StreamHub.">
+<link rel="canonical" id="canonicalLink" href="/category/">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0b0c10">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<script src="/js/applock.js"></script>
+
+<header class="site-header">
+  <div class="container">
+    <a href="/" class="logo">Stream<span>Hub</span></a>
+    <nav class="main-nav">
+      <a href="/">Home</a>
+      <a href="/category/" class="active">Kategori</a>
+      <a href="/search/">Cari</a>
+    </nav>
+    <div class="header-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="quickSearch" placeholder="Cari video...">
+    </div>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1 id="categoryHeading">Semua Kategori</h1>
+    <p id="categorySub">Pilih kategori untuk menjelajahi video.</p>
+  </section>
+
+  <div class="chip-row" id="categoryChips">
+    <a href="/category/" class="chip">Semua</a>
+  </div>
+
+  <div class="ad-slot" data-ad-placement="category_top"></div>
+
+  <div class="video-grid" id="videoGrid"></div>
+  <div class="pagination" id="pagination"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">&copy; <span id="year"></span> StreamHub. Semua hak dilindungi.</div>
+</footer>
+
+<script src="/js/utils.js"></script>
+<script src="/js/category.js"></script>
+<script src="/js/ads.js"></script>
+<script src="/js/pwa.js"></script>
+<script src="/js/push.js"></script>
+<script src="/js/tracker.js"></script>
+</body>
+</html>
