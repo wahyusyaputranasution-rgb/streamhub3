@@ -469,7 +469,63 @@ wrangler d1 execute streaming_db --remote --file=./database/migration_settings.s
 
 ---
 
-## 26. Pengembangan Lokal
+## 27. Automasi: Auto-Publish Terjadwal + Auto-post Telegram
+
+### Auto-Publish Terjadwal
+
+Video berstatus **Draft** dengan **Tanggal Publish** yang sudah lewat akan otomatis berubah jadi
+**Published** setiap 5 menit, lewat fitur **Cloudflare Cron Trigger** (sudah dikonfigurasi di
+`wrangler.toml`, tidak perlu setup tambahan apa pun).
+
+**Cara pakai:**
+1. Buat video seperti biasa, isi **Tanggal Publish** dengan tanggal/jam di masa depan
+2. Set status **Draft**
+3. Simpan — video akan otomatis jadi Published begitu waktunya tiba (dalam 5 menit setelah
+   waktu itu lewat, sesuai jadwal cron)
+
+**Untuk testing** (tidak perlu menunggu jadwal cron): dashboard → tab Pengaturan → panel
+**"Auto-Publish Terjadwal"** → klik **"Jalankan Auto-Publish Sekarang"**.
+
+### Auto-post ke Telegram
+
+Setiap video yang jadi **Published** (baik manual atau lewat auto-publish di atas) otomatis
+dikirim sebagai pesan ke channel/grup Telegram Anda (judul + deskripsi + thumbnail + link nonton).
+Setiap video hanya dikirim **sekali** (tidak berulang kalau videonya diedit lagi setelah publish).
+
+**Cara membuat Bot Telegram (gratis, 2 menit):**
+1. Buka Telegram, cari **@BotFather**, mulai chat
+2. Kirim `/newbot`, ikuti instruksinya (kasih nama & username bot)
+3. BotFather akan kasih **Bot Token**, bentuknya seperti `123456789:AAExxxxxxxxxxxxxxxxxxxxxxxxxxx`
+   — copy ini
+
+**Cara mendapatkan Chat ID:**
+- **Untuk channel:** tambahkan bot Anda sebagai admin di channel tersebut. Chat ID channel biasanya
+  berbentuk `-100xxxxxxxxxx` (bisa dicek lewat bot seperti @username_to_id_bot, atau lewat API
+  `https://api.telegram.org/bot<TOKEN>/getUpdates` setelah kirim pesan apa saja ke channel)
+- **Untuk grup:** tambahkan bot ke grup, kirim pesan apa saja di grup, lalu buka
+  `https://api.telegram.org/bot<TOKEN>/getUpdates` di browser — cari nilai `"chat":{"id": ...}`
+- **Untuk chat pribadi dengan bot:** mulai chat dengan bot Anda, kirim `/start`, lalu cek endpoint
+  `getUpdates` yang sama
+
+**Cara aktifkan di StreamHub:**
+1. Dashboard → tab Pengaturan → panel **"Integrasi Telegram"**
+2. Centang **"Aktifkan auto-post ke Telegram"**
+3. Isi **Bot Token** dan **Chat ID**
+4. Simpan
+
+**Migrasi database yang diperlukan** (aman, tidak menyentuh data video/kategori yang sudah ada):
+```bash
+wrangler d1 execute streaming_db --remote --file=./database/migration_automation.sql
+```
+(Butuh juga tabel `settings` dari migrasi sebelumnya — kalau belum pernah dijalankan, jalankan
+`migration_settings.sql` terlebih dulu.)
+
+**Catatan keamanan:** Bot Token bersifat rahasia (bisa dipakai kirim pesan "atas nama" bot Anda
+kalau bocor). Tersimpan di database D1, hanya bisa dibaca lewat endpoint yang wajib login admin.
+
+---
+
+## 28. Pengembangan Lokal
 
 ```bash
 npx wrangler dev

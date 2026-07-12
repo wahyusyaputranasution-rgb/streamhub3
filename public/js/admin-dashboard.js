@@ -86,6 +86,9 @@
       document.getElementById("csEnabledInput").checked = s.cs_enabled === "1";
       document.getElementById("csLinkInput").value = s.cs_link || "";
       document.getElementById("csLabelInput").value = s.cs_label || "";
+      document.getElementById("telegramEnabledInput").checked = s.telegram_enabled === "1";
+      document.getElementById("telegramBotTokenInput").value = s.telegram_bot_token || "";
+      document.getElementById("telegramChatIdInput").value = s.telegram_chat_id || "";
     } catch {
       // Diamkan, form tetap kosong kalau gagal
     }
@@ -105,6 +108,40 @@
     } catch (err) {
       siteSettingsError.textContent = err.message || "Gagal menyimpan pengaturan";
       siteSettingsError.style.display = "block";
+    }
+  });
+
+  // ---------- Integrasi Telegram ----------
+  const telegramSettingsForm = document.getElementById("telegramSettingsForm");
+  const telegramFormError = document.getElementById("telegramFormError");
+
+  telegramSettingsForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    telegramFormError.style.display = "none";
+    const settings = {
+      telegram_enabled: document.getElementById("telegramEnabledInput").checked ? "1" : "0",
+      telegram_bot_token: document.getElementById("telegramBotTokenInput").value.trim(),
+      telegram_chat_id: document.getElementById("telegramChatIdInput").value.trim(),
+    };
+    try {
+      await Utils.api("/api/settings", { method: "PUT", body: { settings }, needsCsrf: true });
+      showToast("Pengaturan Telegram disimpan");
+    } catch (err) {
+      telegramFormError.textContent = err.message || "Gagal menyimpan pengaturan";
+      telegramFormError.style.display = "block";
+    }
+  });
+
+  // ---------- Auto-Publish manual trigger ----------
+  const autoPublishResult = document.getElementById("autoPublishResult");
+  document.getElementById("runAutoPublishBtn").addEventListener("click", async () => {
+    autoPublishResult.textContent = "Memeriksa video draft...";
+    try {
+      const res = await Utils.api("/api/automation/run-now", { method: "POST", needsCsrf: true });
+      autoPublishResult.textContent = `${res.data.published} video berhasil dipublish otomatis.`;
+      if (res.data.published > 0) loadVideosTable();
+    } catch (err) {
+      autoPublishResult.textContent = err.message || "Gagal menjalankan auto-publish";
     }
   });
 

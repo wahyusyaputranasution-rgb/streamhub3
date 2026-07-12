@@ -10,6 +10,11 @@ compatibility_flags = ["nodejs_compat"]
 directory = "public"
 binding = "ASSETS"
 
+# Cron Trigger: cek tiap 5 menit apakah ada video draft yang tanggal publish-nya
+# sudah lewat, lalu otomatis dipublish (dan kirim notifikasi Telegram kalau aktif).
+[triggers]
+crons = ["*/5 * * * *"]
+
 # D1 Database binding.
 # Ambil "database_id" dari: Cloudflare Dashboard -> Workers & Pages -> D1
 # -> klik database "streaming_db" -> salin Database ID di halaman Overview-nya.

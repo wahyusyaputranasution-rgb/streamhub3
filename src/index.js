@@ -42,6 +42,7 @@ import {
 } from "../lib/db.js";
 import { normalizeEmbedUrl } from "../lib/embed.js";
 import { sendPushNotification } from "../lib/webpush.js";
+import { sendTelegramNotification } from "../lib/telegram.js";
 
 const SECURITY_HEADERS = {
   "X-Content-Type-Options": "nosniff",
@@ -262,7 +263,12 @@ async function handleVideosCollection(request, env, url) {
       .bind(title, slug, description, categoryId, embedUrl, thumbnailUrl, status, finalPublishDate)
       .run();
 
-    return ok({ id: result.meta.last_row_id, slug }, { message: "Video berhasil dibuat" });
+    const newId = result.meta.last_row_id;
+    if (status === "published") {
+      await maybeNotifyTelegram(env, { id: newId, slug, title, description, thumbnail_url: thumbnailUrl });
+    }
+
+    return ok({ id: newId, slug }, { message: "Video berhasil dibuat" });
   }
 
   return fail("Method tidak diizinkan", 405);
@@ -308,6 +314,10 @@ async function handleVideoById(request, env, id) {
       .prepare(`UPDATE videos SET title = ?, slug = ?, description = ?, category_id = ?, embed_url = ?, thumbnail_url = ?, status = ?, publish_date = ?, updated_at = datetime('now') WHERE id = ?`)
       .bind(title, slug, description, categoryId, embedUrl, thumbnailUrl, status, finalPublishDate, id)
       .run();
+
+    if (status === "published" && !existing.telegram_posted) {
+      await maybeNotifyTelegram(env, { id, slug, title, description, thumbnail_url: thumbnailUrl });
+    }
 
     return ok({ id, slug }, { message: "Video berhasil diperbarui" });
   }
@@ -355,6 +365,62 @@ async function handleViewCounter(request, env, id) {
   await env.DB.prepare("INSERT INTO view_logs (video_id, ip_hash) VALUES (?, ?)").bind(id, ipHash).run();
   await env.DB.prepare("UPDATE videos SET views = views + 1 WHERE id = ?").bind(id).run();
   return ok({ counted: true, views: video.views + 1 });
+}
+
+// ================= AUTOMATION (auto-publish + Telegram) =================
+
+async function maybeNotifyTelegram(env, video) {
+  try {
+    const settings = await getAllSettings(env.DB);
+    if (settings.telegram_enabled !== "1") return;
+    if (!settings.telegram_bot_token || !settings.telegram_chat_id) return;
+
+    const siteUrl = (env.SITE_URL || "").replace(/\/$/, "");
+    const watchUrl = `${siteUrl}/watch/?slug=${encodeURIComponent(video.slug)}`;
+
+    const result = await sendTelegramNotification({
+      botToken: settings.telegram_bot_token,
+      chatId: settings.telegram_chat_id,
+      title: video.title,
+      description: video.description,
+      url: watchUrl,
+      thumbnailUrl: video.thumbnail_url,
+    });
+
+    if (result.ok) {
+      await env.DB.prepare("UPDATE videos SET telegram_posted = 1 WHERE id = ?").bind(video.id).run();
+    }
+  } catch {
+    // Jangan biarkan kegagalan Telegram mengganggu proses utama (simpan/publish video)
+  }
+}
+
+async function runAutoPublish(env) {
+  const dueRows = await env.DB
+    .prepare(
+      `SELECT id, slug, title, description, thumbnail_url, telegram_posted FROM videos
+       WHERE status = 'draft' AND publish_date IS NOT NULL AND publish_date <= datetime('now')`
+    )
+    .all();
+  const due = dueRows.results || [];
+
+  for (const v of due) {
+    await env.DB.prepare("UPDATE videos SET status = 'published', updated_at = datetime('now') WHERE id = ?").bind(v.id).run();
+    if (!v.telegram_posted) {
+      await maybeNotifyTelegram(env, v);
+    }
+  }
+  return due.length;
+}
+
+async function handleRunAutoPublishNow(request, env) {
+  if (request.method !== "POST") return fail("Method tidak diizinkan", 405);
+  const session = await requireAuth(request, env.DB);
+  if (!session) return unauthorized();
+  if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+  const publishedCount = await runAutoPublish(env);
+  return ok({ published: publishedCount }, { message: `${publishedCount} video draft dipublish otomatis` });
 }
 
 // ================= CATEGORIES =================
@@ -827,6 +893,8 @@ export default {
         response = await handleSettingsCollection(request, env);
       } else if (path === "/api/settings/public") {
         response = await handlePublicSettings(request, env);
+      } else if (path === "/api/automation/run-now") {
+        response = await handleRunAutoPublishNow(request, env);
       } else if (path === "/api/videos") {
         response = await handleVideosCollection(request, env, url);
       } else if (/^\/api\/videos\/\d+$/.test(path)) {
@@ -874,5 +942,12 @@ export default {
     } catch (err) {
       return withSecurityHeaders(serverError(err));
     }
+  },
+
+  // Dipanggil otomatis oleh Cloudflare Cron Trigger (lihat [triggers] di wrangler.toml).
+  // Publish otomatis video draft yang tanggal publish-nya sudah lewat, lalu kirim
+  // notifikasi Telegram untuk video yang baru dipublish (kalau diaktifkan).
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runAutoPublish(env));
   },
 };

@@ -166,6 +166,44 @@
       </div>
 
       <div class="panel">
+        <div class="panel-title"><h2>Integrasi Telegram (Auto-post Video Baru)</h2></div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Setiap video berstatus "Published" (manual atau lewat auto-publish terjadwal) otomatis
+          dikirim ke channel/grup Telegram Anda. Cara dapat Bot Token & Chat ID ada di README.md
+          bagian Automasi.
+        </p>
+        <form id="telegramSettingsForm">
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" id="telegramEnabledInput" style="width:auto;">
+              <span>Aktifkan auto-post ke Telegram</span>
+            </label>
+          </div>
+          <div class="field">
+            <label for="telegramBotTokenInput">Bot Token</label>
+            <input type="text" id="telegramBotTokenInput" placeholder="123456789:AAExxxxxxxxxxxxxxxxxxxxxxxxxxx">
+          </div>
+          <div class="field">
+            <label for="telegramChatIdInput">Chat ID (channel/grup)</label>
+            <input type="text" id="telegramChatIdInput" placeholder="-1001234567890 atau @namachannel">
+          </div>
+          <div class="field-error" id="telegramFormError"></div>
+          <button type="submit" class="btn btn-primary">Simpan Pengaturan Telegram</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><h2>Auto-Publish Terjadwal</h2></div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Video berstatus Draft dengan Tanggal Publish yang sudah lewat akan otomatis di-publish
+          setiap 5 menit (lewat Cloudflare Cron Trigger). Gunakan tombol ini untuk mengecek
+          sekarang juga tanpa menunggu jadwal — berguna untuk testing.
+        </p>
+        <div id="autoPublishResult" style="font-size:0.82rem;color:var(--text-dim);margin-bottom:10px;"></div>
+        <button class="btn" id="runAutoPublishBtn">Jalankan Auto-Publish Sekarang</button>
+      </div>
+
+      <div class="panel">
         <div class="panel-title"><h2>Kirim Push Notification</h2></div>
         <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
           Kirim notifikasi ke semua pengunjung yang sudah mengaktifkan notifikasi di HP mereka
