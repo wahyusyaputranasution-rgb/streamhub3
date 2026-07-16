@@ -525,7 +525,55 @@ kalau bocor). Tersimpan di database D1, hanya bisa dibaca lewat endpoint yang wa
 
 ---
 
-## 28. Pengembangan Lokal
+## 29. Iklan Sponsor (Kartu Endorse Menyatu di Grid)
+
+Fitur baru **terpisah** dari sistem Iklan (Adsterra) yang sudah ada — dipakai untuk endorse/sponsor
+langsung dari brand, tampil sebagai kartu yang menyatu dengan tampilan kartu video biasa.
+
+**Cara pakai:**
+1. Dashboard → tab **Sponsor** (terpisah dari tab Iklan) → **+ Tambah Sponsor**
+2. Isi:
+   - **Nama Sponsor** — buat referensi Anda sendiri (tidak tampil ke publik)
+   - **Judul yang Tampil di Kartu** — teks yang dilihat pengunjung
+   - **Gambar** — upload dari HP atau tempel URL
+   - **Link Tujuan** — dibuka di tab baru saat kartu diklik
+   - **Tanggal Mulai** & **Tanggal Berakhir** — kartu otomatis aktif & berhenti tayang sendiri
+     sesuai rentang ini, tidak perlu dihapus manual setelah kontrak berakhir
+3. Simpan — kartu otomatis muncul di posisi acak dalam grid Home & Kategori
+
+**Catatan:**
+- Cuma **1 kartu sponsor aktif** yang ditampilkan per kunjungan (dipilih acak kalau ada lebih dari
+  satu yang jadwalnya tumpang tindih)
+- Kartu selalu diberi label kecil "Sponsor" di pojok — ini penting untuk transparansi ke pengunjung
+  dan biasanya juga jadi syarat kebijakan jaringan iklan (termasuk Adsterra) soal native advertising
+- Kartu ini **tidak terhubung otomatis** ke jaringan iklan mana pun — link dan gambarnya murni
+  yang Anda isi manual, cocok untuk kontrak endorse yang Anda urus sendiri dengan brand
+
+**Migrasi database yang diperlukan** (aman, tidak menyentuh tabel lain):
+```bash
+wrangler d1 execute streaming_db --remote --file=./database/migration_sponsor_ads.sql
+```
+
+---
+
+## 30. Perbaikan Tampilan Native Banner (Adsterra)
+
+Container slot iklan (`.ad-slot`) sebelumnya membatasi lebar konten iklan ke tengah (centered),
+yang bisa membuat script Native Banner dari Adsterra hanya mendapat ruang sempit untuk menyusun
+kartu-kartunya. Sekarang container dibuat selebar penuh kontainer halaman, memberi ruang maksimal
+supaya script Adsterra bisa menyusun lebih banyak kartu sejajar (mis. 4 kolom) sesuai lebar layar.
+
+**Catatan jujur:** jumlah kolom yang benar-benar tampil (3, 4, atau 5) pada akhirnya **ditentukan
+oleh script Adsterra sendiri** berdasarkan lebar ruang yang tersedia — bukan sesuatu yang bisa
+dipaksa persis dari sisi kode situs ini, karena itu konten pihak ketiga yang responsif sendiri.
+Perubahan ini memaksimalkan peluang tampil lebih lebar/lebih banyak kolom, tapi jumlah pastinya
+tetap mengikuti logika internal Adsterra. Kalau Adsterra punya pengaturan jumlah kolom di dashboard
+mereka sendiri (cek halaman pengaturan ad unit Native Banner Anda di akun Adsterra), itu jalur
+paling pasti untuk mengunci jumlah kolom secara eksak.
+
+---
+
+## 31. Pengembangan Lokal
 
 ```bash
 npx wrangler dev

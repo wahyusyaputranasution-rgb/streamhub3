@@ -433,13 +433,27 @@ button { font-family: inherit; cursor: pointer; }
 .not-found h1 { font-size: 4rem; margin: 0; color: var(--accent); }
 .not-found p { color: var(--text-dim); margin: 8px 0 20px; }
 
+/* ===== Sponsor card ===== */
+.sponsor-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(255, 56, 96, 0.9);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
 /* ===== Ad slot ===== */
 .ad-slot {
   margin: 16px 0;
   min-height: 0;
   overflow: hidden;
-  display: flex;
-  justify-content: center;
+  width: 100%;
 }
 .ad-slot:empty { margin: 0; }
 

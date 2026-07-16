@@ -120,6 +120,22 @@ CREATE TABLE IF NOT EXISTS settings (
   value       TEXT NOT NULL DEFAULT '',
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Kartu "Sponsor" yang menyatu di grid video (terpisah dari sistem Iklan/ad_zones
+-- yang berbasis kode script). Dipakai untuk endorse/sponsor langsung dari brand,
+-- lengkap dengan jadwal tanggal mulai & berakhir.
+CREATE TABLE IF NOT EXISTS sponsor_ads (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        TEXT NOT NULL,
+  title       TEXT NOT NULL,
+  image_url   TEXT NOT NULL,
+  link_url    TEXT NOT NULL,
+  start_date  TEXT NOT NULL,
+  end_date    TEXT NOT NULL,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_sponsor_ads_dates ON sponsor_ads(start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_videos_status       ON videos(status);
 CREATE INDEX IF NOT EXISTS idx_videos_category     ON videos(category_id);
 CREATE INDEX IF NOT EXISTS idx_videos_views        ON videos(views DESC);

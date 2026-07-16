@@ -29,10 +29,11 @@
     video: document.getElementById("tab-video"),
     kategori: document.getElementById("tab-kategori"),
     iklan: document.getElementById("tab-iklan"),
+    sponsor: document.getElementById("tab-sponsor"),
     pengaturan: document.getElementById("tab-pengaturan"),
   };
   const topbarTitle = document.getElementById("topbarTitle");
-  const titles = { dashboard: "Dashboard", video: "Kelola Video", kategori: "Kelola Kategori", iklan: "Kelola Iklan", pengaturan: "Pengaturan" };
+  const titles = { dashboard: "Dashboard", video: "Kelola Video", kategori: "Kelola Kategori", iklan: "Kelola Iklan", sponsor: "Iklan Sponsor", pengaturan: "Pengaturan" };
 
   function activateTab(tab) {
     Object.keys(tabPanels).forEach((key) => {
@@ -50,6 +51,7 @@
     if (tab === "video") loadVideosTable();
     if (tab === "kategori") loadCategoriesTable();
     if (tab === "iklan") loadAdsTable();
+    if (tab === "sponsor") loadSponsorsTable();
     if (tab === "pengaturan") {
       loadAdminsTable();
       loadSiteSettings();
@@ -625,6 +627,148 @@
 
     csvProgress.textContent = `Selesai: ${success} berhasil, ${failed} gagal.`;
     if (success > 0) loadVideosTable();
+  });
+
+  // ---------- Sponsor Ads ----------
+  function formatDateOnly(iso) {
+    if (!iso) return "-";
+    return iso.slice(0, 10);
+  }
+
+  function sponsorStatusBadge(ad) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (today < ad.start_date) return '<span class="badge draft">Terjadwal</span>';
+    if (today > ad.end_date) return '<span class="badge draft">Kedaluwarsa</span>';
+    return '<span class="badge published">Aktif</span>';
+  }
+
+  async function loadSponsorsTable() {
+    const tbody = document.getElementById("sponsorsBody");
+    tbody.innerHTML = `<tr><td colspan="5">Memuat...</td></tr>`;
+    try {
+      const res = await Utils.api("/api/sponsor-ads");
+      const items = res.data;
+      tbody.innerHTML = items.length
+        ? items
+            .map(
+              (s) => `<tr>
+          <td class="title-cell">${Utils.escapeHtml(s.name)}</td>
+          <td class="title-cell">${Utils.escapeHtml(s.title)}</td>
+          <td>${formatDateOnly(s.start_date)} s/d ${formatDateOnly(s.end_date)}</td>
+          <td>${sponsorStatusBadge(s)}</td>
+          <td>
+            <button class="icon-btn" data-edit-sponsor="${s.id}">Edit</button>
+            <button class="icon-btn danger" data-delete-sponsor="${s.id}" data-name="${Utils.escapeHtml(s.name)}">Hapus</button>
+          </td>
+        </tr>`
+            )
+            .join("")
+        : `<tr><td colspan="5">Belum ada sponsor. Klik "+ Tambah Sponsor" untuk mulai.</td></tr>`;
+
+      tbody.querySelectorAll("[data-edit-sponsor]").forEach((btn) => btn.addEventListener("click", () => openSponsorModal(btn.dataset.editSponsor)));
+      tbody.querySelectorAll("[data-delete-sponsor]").forEach((btn) =>
+        btn.addEventListener("click", () => confirmAction(`Hapus sponsor "${btn.dataset.name}"?`, () => deleteSponsor(btn.dataset.deleteSponsor)))
+      );
+    } catch {
+      tbody.innerHTML = `<tr><td colspan="5">Gagal memuat data sponsor.</td></tr>`;
+    }
+  }
+
+  async function deleteSponsor(id) {
+    try {
+      await Utils.api(`/api/sponsor-ads/${id}`, { method: "DELETE", needsCsrf: true });
+      showToast("Sponsor dihapus");
+      loadSponsorsTable();
+    } catch (err) {
+      showToast(err.message || "Gagal menghapus sponsor");
+    }
+  }
+
+  const sponsorModal = document.getElementById("sponsorModal");
+  const sponsorForm = document.getElementById("sponsorForm");
+  const sponsorFormError = document.getElementById("sponsorFormError");
+  const sponsorFileInput = document.getElementById("sponsorFileInput");
+  const sponsorUploadStatus = document.getElementById("sponsorUploadStatus");
+  const sponsorPreview = document.getElementById("sponsorPreview");
+
+  document.getElementById("addSponsorBtn").addEventListener("click", () => openSponsorModal(null));
+  document.getElementById("sponsorCancelBtn").addEventListener("click", () => sponsorModal.classList.remove("show"));
+
+  sponsorFileInput.addEventListener("change", async () => {
+    const file = sponsorFileInput.files[0];
+    if (!file) return;
+    sponsorUploadStatus.textContent = "Mengompres & mengupload...";
+    try {
+      const dataUrl = await compressImage(file);
+      const [meta, base64Data] = dataUrl.split(",");
+      const contentType = meta.match(/data:(.*);base64/)[1];
+      const res = await Utils.api("/api/uploads", { method: "POST", needsCsrf: true, body: { contentType, data: base64Data } });
+      document.getElementById("sponsorImageInput").value = res.data.url;
+      sponsorPreview.src = res.data.url;
+      sponsorPreview.style.display = "block";
+      sponsorUploadStatus.textContent = "Berhasil diupload ✓";
+    } catch (err) {
+      sponsorUploadStatus.textContent = err.message || "Gagal upload gambar";
+    }
+  });
+
+  async function openSponsorModal(id) {
+    sponsorFormError.style.display = "none";
+    sponsorForm.reset();
+    document.getElementById("sponsorId").value = id || "";
+    document.getElementById("sponsorModalTitle").textContent = id ? "Edit Sponsor" : "Tambah Sponsor";
+    sponsorUploadStatus.textContent = "";
+    sponsorPreview.style.display = "none";
+    sponsorFileInput.value = "";
+
+    if (id) {
+      try {
+        const res = await Utils.api("/api/sponsor-ads");
+        const s = (res.data || []).find((item) => String(item.id) === String(id));
+        if (!s) throw new Error("Sponsor tidak ditemukan");
+        document.getElementById("sponsorNameInput").value = s.name;
+        document.getElementById("sponsorTitleInput").value = s.title;
+        document.getElementById("sponsorImageInput").value = s.image_url;
+        document.getElementById("sponsorLinkInput").value = s.link_url;
+        document.getElementById("sponsorStartInput").value = formatDateOnly(s.start_date);
+        document.getElementById("sponsorEndInput").value = formatDateOnly(s.end_date);
+        sponsorPreview.src = s.image_url;
+        sponsorPreview.style.display = "block";
+      } catch (err) {
+        showToast("Gagal memuat data sponsor");
+        return;
+      }
+    }
+    sponsorModal.classList.add("show");
+  }
+
+  sponsorForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    sponsorFormError.style.display = "none";
+    const id = document.getElementById("sponsorId").value;
+    const payload = {
+      name: document.getElementById("sponsorNameInput").value.trim(),
+      title: document.getElementById("sponsorTitleInput").value.trim(),
+      imageUrl: document.getElementById("sponsorImageInput").value.trim(),
+      linkUrl: document.getElementById("sponsorLinkInput").value.trim(),
+      startDate: document.getElementById("sponsorStartInput").value,
+      endDate: document.getElementById("sponsorEndInput").value,
+    };
+
+    try {
+      if (id) {
+        await Utils.api(`/api/sponsor-ads/${id}`, { method: "PUT", body: payload, needsCsrf: true });
+        showToast("Sponsor diperbarui");
+      } else {
+        await Utils.api("/api/sponsor-ads", { method: "POST", body: payload, needsCsrf: true });
+        showToast("Sponsor ditambahkan");
+      }
+      sponsorModal.classList.remove("show");
+      loadSponsorsTable();
+    } catch (err) {
+      sponsorFormError.textContent = err.message || "Gagal menyimpan sponsor";
+      sponsorFormError.style.display = "block";
+    }
   });
 
   // ---------- Categories table ----------

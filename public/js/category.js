@@ -104,6 +104,7 @@
         videoGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Belum ada video di kategori ini.</div>`;
       } else {
         res.data.items.forEach((v) => videoGrid.appendChild(videoCard(v)));
+        Utils.insertSponsorRandomly(videoGrid);
       }
       renderPagination(res.data.totalPages);
     } catch {

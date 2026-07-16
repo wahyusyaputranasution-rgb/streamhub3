@@ -86,5 +86,53 @@ const Utils = (() => {
     return `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='225'><rect width='100%' height='100%' fill='%23181a23'/><text x='50%' y='50%' font-family='sans-serif' font-size='42' fill='%233a3f52' text-anchor='middle' dominant-baseline='middle'>${initials}</text></svg>`;
   }
 
-  return { api, escapeHtml, formatViews, formatDate, debounce, qs, setCsrfToken, getCsrfToken, placeholderThumb };
+  function buildSponsorCard(ad) {
+    const a = document.createElement("a");
+    a.href = ad.link_url;
+    a.target = "_blank";
+    a.rel = "noopener sponsored";
+    a.className = "video-card sponsor-card";
+    a.innerHTML = `
+      <div class="video-thumb">
+        <img loading="lazy" src="${escapeHtml(ad.image_url)}" alt="${escapeHtml(ad.title)}">
+        <span class="sponsor-badge">Sponsor</span>
+      </div>
+      <div class="video-info">
+        <h3>${escapeHtml(ad.title)}</h3>
+      </div>
+    `;
+    return a;
+  }
+
+  async function insertSponsorRandomly(container) {
+    try {
+      const res = await api("/api/sponsor-ads/active");
+      const ad = res.data;
+      if (!ad) return;
+      const card = buildSponsorCard(ad);
+      const children = container.children;
+      if (!children.length) {
+        container.appendChild(card);
+        return;
+      }
+      const randomIndex = Math.floor(Math.random() * (children.length + 1));
+      if (randomIndex >= children.length) container.appendChild(card);
+      else container.insertBefore(card, children[randomIndex]);
+    } catch {
+      // Diamkan saja bila gagal memuat iklan sponsor
+    }
+  }
+
+  return {
+    api,
+    escapeHtml,
+    formatViews,
+    formatDate,
+    debounce,
+    qs,
+    setCsrfToken,
+    getCsrfToken,
+    placeholderThumb,
+    insertSponsorRandomly,
+  };
 })();

@@ -108,6 +108,7 @@
         allGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Belum ada video.</div>`;
       } else {
         res.data.items.forEach((v) => allGrid.appendChild(videoCard(v)));
+        if (page === 1) Utils.insertSponsorRandomly(allGrid);
       }
     } catch (err) {
       if (page === 1) allGrid.innerHTML = `<div class="empty-state">Gagal memuat video.</div>`;

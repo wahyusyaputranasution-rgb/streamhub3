@@ -23,6 +23,7 @@
       <a href="#video" data-tab="video">Video</a>
       <a href="#kategori" data-tab="kategori">Kategori</a>
       <a href="#iklan" data-tab="iklan">Iklan</a>
+      <a href="#sponsor" data-tab="sponsor">Sponsor</a>
       <a href="#pengaturan" data-tab="pengaturan">Pengaturan</a>
       <button class="logout-btn" id="logoutBtn">Logout</button>
     </nav>
@@ -39,6 +40,7 @@
       <button data-tab="video">Video</button>
       <button data-tab="kategori">Kategori</button>
       <button data-tab="iklan">Iklan</button>
+      <button data-tab="sponsor">Sponsor</button>
       <button data-tab="pengaturan">Pengaturan</button>
     </div>
 
@@ -132,6 +134,27 @@
           <table class="data-table">
             <thead><tr><th>Nama</th><th>Penempatan</th><th>Impresi</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody id="adsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: SPONSOR -->
+    <section class="tab-panel" id="tab-sponsor" style="display:none;">
+      <div class="panel">
+        <div class="panel-title">
+          <h2>Iklan Sponsor (Kartu Menyatu di Grid)</h2>
+          <button class="btn btn-primary" id="addSponsorBtn">+ Tambah Sponsor</button>
+        </div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Kartu sponsor tampil menyatu di antara grid video (Home & Kategori), bentuknya sama
+          seperti kartu video biasa dengan label "Sponsor" kecil di pojok. Cocok untuk endorse
+          langsung dari brand, terpisah dari sistem Iklan (Adsterra) di atas.
+        </p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Nama</th><th>Judul Tampil</th><th>Periode</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="sponsorsBody"></tbody>
           </table>
         </div>
       </div>
@@ -431,6 +454,53 @@
       <div class="field-error" id="adFormError"></div>
       <div class="modal-actions">
         <button type="button" class="btn" id="adCancelBtn">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: SPONSOR FORM -->
+<div class="modal-overlay" id="sponsorModal">
+  <div class="modal-box">
+    <h2 id="sponsorModalTitle">Tambah Sponsor</h2>
+    <form id="sponsorForm">
+      <input type="hidden" id="sponsorId">
+      <div class="field">
+        <label for="sponsorNameInput">Nama Sponsor (referensi internal)</label>
+        <input type="text" id="sponsorNameInput" placeholder="Contoh: Endorse Brand X - Juli" required>
+      </div>
+      <div class="field">
+        <label for="sponsorTitleInput">Judul yang Tampil di Kartu</label>
+        <input type="text" id="sponsorTitleInput" placeholder="Coba App XYZ - Bonus 100%" required>
+      </div>
+      <div class="field">
+        <label for="sponsorImageInput">Gambar</label>
+        <input type="url" id="sponsorImageInput" placeholder="https://... (atau upload di bawah)" required>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <label for="sponsorFileInput" class="btn" style="cursor:pointer;margin:0;">Upload dari HP</label>
+          <input type="file" id="sponsorFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;">
+          <span id="sponsorUploadStatus" style="font-size:0.78rem;color:var(--text-dim);"></span>
+        </div>
+        <img id="sponsorPreview" style="max-width:160px;margin-top:8px;border-radius:8px;display:none;">
+      </div>
+      <div class="field">
+        <label for="sponsorLinkInput">Link Tujuan (dibuka saat kartu diklik)</label>
+        <input type="url" id="sponsorLinkInput" placeholder="https://..." required>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label for="sponsorStartInput">Tanggal Mulai</label>
+          <input type="date" id="sponsorStartInput" required>
+        </div>
+        <div class="field">
+          <label for="sponsorEndInput">Tanggal Berakhir</label>
+          <input type="date" id="sponsorEndInput" required>
+        </div>
+      </div>
+      <div class="field-error" id="sponsorFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="sponsorCancelBtn">Batal</button>
         <button type="submit" class="btn btn-primary">Simpan</button>
       </div>
     </form>

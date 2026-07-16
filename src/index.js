@@ -39,6 +39,12 @@ import {
   getAllSettings,
   getPublicSettings,
   setSetting,
+  listSponsorAds,
+  getSponsorAdById,
+  getActiveSponsorAd,
+  createSponsorAd,
+  updateSponsorAd,
+  deleteSponsorAd,
 } from "../lib/db.js";
 import { normalizeEmbedUrl } from "../lib/embed.js";
 import { sendPushNotification } from "../lib/webpush.js";
@@ -682,6 +688,90 @@ async function handlePublicSettings(request, env) {
   return ok(settings);
 }
 
+// ================= SPONSOR ADS (kartu endorse di grid) =================
+
+async function handleSponsorAdActive(request, env) {
+  if (request.method !== "GET") return fail("Method tidak diizinkan", 405);
+  const ad = await getActiveSponsorAd(env.DB);
+  return ok(ad);
+}
+
+async function handleSponsorAdsCollection(request, env) {
+  if (request.method === "GET") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    const ads = await listSponsorAds(env.DB);
+    return ok(ads);
+  }
+
+  if (request.method === "POST") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+    const body = await request.json().catch(() => ({}));
+    const name = sanitizeText((body.name || "").trim());
+    const title = sanitizeText((body.title || "").trim());
+    const imageUrl = (body.imageUrl || "").trim();
+    const linkUrl = (body.linkUrl || "").trim();
+    const startDate = (body.startDate || "").trim();
+    const endDate = (body.endDate || "").trim();
+
+    if (!name || !title) return fail("Nama dan judul wajib diisi");
+    if (!imageUrl || !isSafeUrl(imageUrl)) return fail("Gambar wajib diisi (upload atau URL valid)");
+    if (!linkUrl || !isSafeUrl(linkUrl)) return fail("Link tujuan tidak valid");
+    if (!startDate || !endDate) return fail("Tanggal mulai dan berakhir wajib diisi");
+    if (startDate > endDate) return fail("Tanggal mulai tidak boleh setelah tanggal berakhir");
+
+    const id = await createSponsorAd(env.DB, { name, title, imageUrl, linkUrl, startDate, endDate });
+    return ok({ id }, { message: "Iklan sponsor berhasil dibuat" });
+  }
+
+  return fail("Method tidak diizinkan", 405);
+}
+
+async function handleSponsorAdById(request, env, id) {
+  if (request.method === "PUT") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+    const existing = await getSponsorAdById(env.DB, id);
+    if (!existing) return notFound("Iklan sponsor tidak ditemukan");
+
+    const body = await request.json().catch(() => ({}));
+    const name = sanitizeText((body.name || "").trim());
+    const title = sanitizeText((body.title || "").trim());
+    const imageUrl = (body.imageUrl || "").trim();
+    const linkUrl = (body.linkUrl || "").trim();
+    const startDate = (body.startDate || "").trim();
+    const endDate = (body.endDate || "").trim();
+
+    if (!name || !title) return fail("Nama dan judul wajib diisi");
+    if (!imageUrl || !isSafeUrl(imageUrl)) return fail("Gambar wajib diisi (upload atau URL valid)");
+    if (!linkUrl || !isSafeUrl(linkUrl)) return fail("Link tujuan tidak valid");
+    if (!startDate || !endDate) return fail("Tanggal mulai dan berakhir wajib diisi");
+    if (startDate > endDate) return fail("Tanggal mulai tidak boleh setelah tanggal berakhir");
+
+    await updateSponsorAd(env.DB, id, { name, title, imageUrl, linkUrl, startDate, endDate });
+    return ok({ id }, { message: "Iklan sponsor berhasil diperbarui" });
+  }
+
+  if (request.method === "DELETE") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+    const existing = await getSponsorAdById(env.DB, id);
+    if (!existing) return notFound("Iklan sponsor tidak ditemukan");
+
+    await deleteSponsorAd(env.DB, id);
+    return ok(null, { message: "Iklan sponsor berhasil dihapus" });
+  }
+
+  return fail("Method tidak diizinkan", 405);
+}
+
 // ================= ADS =================
 
 const ALLOWED_PLACEMENTS = [
@@ -895,6 +985,13 @@ export default {
         response = await handlePublicSettings(request, env);
       } else if (path === "/api/automation/run-now") {
         response = await handleRunAutoPublishNow(request, env);
+      } else if (path === "/api/sponsor-ads/active") {
+        response = await handleSponsorAdActive(request, env);
+      } else if (path === "/api/sponsor-ads") {
+        response = await handleSponsorAdsCollection(request, env);
+      } else if (/^\/api\/sponsor-ads\/\d+$/.test(path)) {
+        const id = parseInt(path.split("/").pop(), 10);
+        response = await handleSponsorAdById(request, env, id);
       } else if (path === "/api/videos") {
         response = await handleVideosCollection(request, env, url);
       } else if (/^\/api\/videos\/\d+$/.test(path)) {
