@@ -72,6 +72,24 @@ const Ads = (() => {
   }
 
   function init() {
+    checkFeatureEnabled().then((enabled) => {
+      if (!enabled) return;
+      renderAllPlacements();
+    });
+  }
+
+  async function checkFeatureEnabled() {
+    try {
+      const res = await fetch("/api/settings/public");
+      const payload = await res.json();
+      const settings = (payload && payload.data) || {};
+      return settings.feature_ads_enabled !== "0";
+    } catch {
+      return true; // gagal cek setting -> fallback tetap aktif (aman secara default)
+    }
+  }
+
+  function renderAllPlacements() {
     // Slot iklan biasa: elemen dengan atribut data-ad-placement="xxx" di halaman
     document.querySelectorAll("[data-ad-placement]").forEach((el) => {
       renderPlacement(el.dataset.adPlacement, el);

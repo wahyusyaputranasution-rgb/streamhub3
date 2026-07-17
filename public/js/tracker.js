@@ -23,7 +23,21 @@
     );
   }
 
+  let trackingEnabled = true;
+
+  async function checkTrackingEnabled() {
+    try {
+      const res = await fetch("/api/settings/public");
+      const payload = await res.json();
+      const settings = (payload && payload.data) || {};
+      trackingEnabled = settings.feature_tracking_enabled !== "0";
+    } catch {
+      trackingEnabled = true;
+    }
+  }
+
   function sendHeartbeat() {
+    if (!trackingEnabled) return;
     const deviceId = getDeviceId();
     const installed = isRunningInstalled();
     fetch("/api/track/heartbeat", {
@@ -34,7 +48,7 @@
     }).catch(() => {});
   }
 
-  sendHeartbeat();
+  checkTrackingEnabled().then(sendHeartbeat);
   setInterval(() => {
     if (!document.hidden) sendHeartbeat();
   }, HEARTBEAT_INTERVAL_MS);

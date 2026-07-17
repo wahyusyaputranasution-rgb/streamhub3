@@ -62,6 +62,49 @@ function withSecurityHeaders(response) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
+function isPageLikePath(path) {
+  if (path.startsWith("/admin")) return false;
+  const lastSegment = path.split("/").pop();
+  return !lastSegment.includes("."); // punya ekstensi (.css/.js/.png/dll) -> bukan halaman, biarkan lewat
+}
+
+function renderMaintenancePage(siteName, message) {
+  const html = `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Sedang Perbaikan - ${siteName}</title>
+<style>
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#0b0c10; color:#e9e9ef; font-family:"Segoe UI",Roboto,-apple-system,sans-serif; text-align:center; padding:24px; }
+  .box { max-width:420px; }
+  .icon { font-size:3rem; margin-bottom:12px; }
+  h1 { font-size:1.3rem; margin:0 0 10px; }
+  p { color:#9a9db0; font-size:0.9rem; line-height:1.6; margin:0; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="icon">🛠️</div>
+    <h1>${siteName} Sedang Dalam Perbaikan</h1>
+    <p>${message || "Kami sedang melakukan sedikit perbaikan. Silakan kembali beberapa saat lagi."}</p>
+  </div>
+</body>
+</html>`;
+  return new Response(html, { status: 503, headers: { "Content-Type": "text/html; charset=utf-8", "Retry-After": "1800" } });
+}
+
+async function serveStaticOrNotFound(request, env) {
+  const assetResponse = await env.ASSETS.fetch(request);
+  if (assetResponse.status === 404) {
+    const notFoundUrl = new URL("/404.html", request.url);
+    const custom404 = await env.ASSETS.fetch(new Request(notFoundUrl, request));
+    return new Response(custom404.body, { status: 404, headers: custom404.headers });
+  }
+  return assetResponse;
+}
+
 // ================= AUTH =================
 
 async function handleAuthSetup(request, env) {
@@ -716,6 +759,7 @@ async function handleSponsorAdsCollection(request, env) {
     const linkUrl = (body.linkUrl || "").trim();
     const startDate = (body.startDate || "").trim();
     const endDate = (body.endDate || "").trim();
+    const enabled = body.enabled === false ? 0 : 1;
 
     if (!name || !title) return fail("Nama dan judul wajib diisi");
     if (!imageUrl || !isSafeUrl(imageUrl)) return fail("Gambar wajib diisi (upload atau URL valid)");
@@ -723,7 +767,7 @@ async function handleSponsorAdsCollection(request, env) {
     if (!startDate || !endDate) return fail("Tanggal mulai dan berakhir wajib diisi");
     if (startDate > endDate) return fail("Tanggal mulai tidak boleh setelah tanggal berakhir");
 
-    const id = await createSponsorAd(env.DB, { name, title, imageUrl, linkUrl, startDate, endDate });
+    const id = await createSponsorAd(env.DB, { name, title, imageUrl, linkUrl, startDate, endDate, enabled });
     return ok({ id }, { message: "Iklan sponsor berhasil dibuat" });
   }
 
@@ -746,6 +790,7 @@ async function handleSponsorAdById(request, env, id) {
     const linkUrl = (body.linkUrl || "").trim();
     const startDate = (body.startDate || "").trim();
     const endDate = (body.endDate || "").trim();
+    const enabled = body.enabled === false ? 0 : 1;
 
     if (!name || !title) return fail("Nama dan judul wajib diisi");
     if (!imageUrl || !isSafeUrl(imageUrl)) return fail("Gambar wajib diisi (upload atau URL valid)");
@@ -753,7 +798,7 @@ async function handleSponsorAdById(request, env, id) {
     if (!startDate || !endDate) return fail("Tanggal mulai dan berakhir wajib diisi");
     if (startDate > endDate) return fail("Tanggal mulai tidak boleh setelah tanggal berakhir");
 
-    await updateSponsorAd(env.DB, id, { name, title, imageUrl, linkUrl, startDate, endDate });
+    await updateSponsorAd(env.DB, id, { name, title, imageUrl, linkUrl, startDate, endDate, enabled });
     return ok({ id }, { message: "Iklan sponsor berhasil diperbarui" });
   }
 
@@ -1022,17 +1067,15 @@ export default {
         response = await handleStats(request, env);
       } else if (path.startsWith("/api/")) {
         response = notFound("Endpoint tidak ditemukan");
-      } else {
-        // Bukan route API -> coba serahkan ke static assets
-        const assetResponse = await env.ASSETS.fetch(request);
-        if (assetResponse.status === 404) {
-          // Tidak ada file statis yang cocok -> tampilkan halaman 404 custom
-          const notFoundUrl = new URL("/404.html", request.url);
-          const custom404 = await env.ASSETS.fetch(new Request(notFoundUrl, request));
-          response = new Response(custom404.body, { status: 404, headers: custom404.headers });
+      } else if (isPageLikePath(path)) {
+        const settings = await getAllSettings(env.DB);
+        if (settings.maintenance_enabled === "1") {
+          response = renderMaintenancePage(settings.site_name || "StreamHub", settings.maintenance_message);
         } else {
-          response = assetResponse;
+          response = await serveStaticOrNotFound(request, env);
         }
+      } else {
+        response = await serveStaticOrNotFound(request, env);
       }
 
       return withSecurityHeaders(response);

@@ -106,6 +106,11 @@ const Utils = (() => {
 
   async function insertSponsorRandomly(container) {
     try {
+      const settingsRes = await fetch("/api/settings/public");
+      const settingsPayload = await settingsRes.json();
+      const settings = (settingsPayload && settingsPayload.data) || {};
+      if (settings.feature_sponsor_enabled === "0") return;
+
       const res = await api("/api/sponsor-ads/active");
       const ad = res.data;
       if (!ad) return;

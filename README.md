@@ -573,7 +573,64 @@ paling pasti untuk mengunci jumlah kolom secara eksak.
 
 ---
 
-## 31. Pengembangan Lokal
+## 32. Perbaikan Bug: Video Gagal Dimuat di Kategori
+
+Penyebabnya: service worker (`sw.js`) menyimpan cache file JS lama di HP, sehingga update kode
+(termasuk fitur sponsor) tidak langsung "kelihatan" oleh browser yang sudah pernah membuka situs
+sebelumnya. Sudah diperbaiki dengan menaikkan versi cache — browser otomatis mengambil file
+terbaru begitu situs dibuka lagi setelah update ini di-deploy. Pemanggilan fitur sponsor juga
+dibuat lebih defensif supaya kejadian serupa di masa depan tidak sampai mengganggu pemuatan video.
+
+## 33. Toggle Aktif/Nonaktif untuk Sponsor
+
+Sponsor sekarang punya kontrol aktif/nonaktif yang terpisah dari jadwal tanggal:
+- Tombol **cepat** "Aktifkan"/"Nonaktifkan" langsung di tabel, tanpa perlu buka form edit
+- Kalau dinonaktifkan, sponsor **tidak akan tampil** di situs meskipun masih dalam rentang
+  tanggal aktifnya — datanya tetap tersimpan, bisa diaktifkan lagi kapan saja
+- Badge status di tabel sekarang membedakan: **Aktif**, **Nonaktif** (dimatikan manual),
+  **Terjadwal** (belum masuk tanggal mulai), **Kedaluwarsa** (sudah lewat tanggal berakhir)
+
+**Migrasi database:**
+- Kalau **belum pernah** menjalankan migrasi sponsor sama sekali → cukup jalankan
+  `migration_sponsor_ads.sql` (sudah termasuk kolom `enabled`)
+- Kalau **sudah pernah** menjalankan migrasi sponsor versi lama sebelumnya → jalankan
+  `migration_sponsor_enabled.sql` untuk menambah kolom yang kurang
+
+---
+
+## 35. Kontrol Penuh Website dari Dashboard
+
+Tab **Pengaturan** sekarang punya panel-panel baru untuk mengendalikan seluruh situs tanpa perlu
+edit kode atau deploy ulang:
+
+### Identitas Situs
+Ganti **nama situs**, **deskripsi**, dan **logo** (upload dari HP atau URL) yang otomatis
+diterapkan ke semua halaman publik (header, judul tab browser). Kosongkan logo untuk tetap
+memakai teks nama situs sebagai logo.
+
+### Mode Maintenance
+Aktifkan untuk menampilkan halaman **"Sedang Perbaikan"** ke semua pengunjung situs — cocok
+dipakai saat Anda lagi bereksperimen/benerin sesuatu dan belum mau publik tau. **Dashboard admin
+tetap bisa diakses normal** saat mode ini aktif (supaya Anda tidak terkunci keluar dari situs
+sendiri). Pesan yang ditampilkan ke pengunjung bisa disesuaikan.
+
+### Kontrol Fitur
+Saklar on/off untuk tiap fitur besar situs, tanpa menghapus data/konfigurasinya:
+- **Kunci PIN Aplikasi** — matikan kalau tidak mau PIN muncul sama sekali walau di-install
+- **Push Notification** — matikan banner "Aktifkan Notifikasi" di semua halaman
+- **Iklan** — matikan seluruh sistem iklan (banner, popunder, smartlink dari tab Iklan) sekaligus
+- **Iklan Sponsor** — matikan kartu sponsor tanpa perlu nonaktifkan satu-satu di tab Sponsor
+- **Tracking Pengguna** — matikan pencatatan device/online-offline kalau tidak diperlukan
+
+**Default semua fitur aktif** kalau belum pernah diatur — jadi situs yang sudah berjalan sebelum
+update ini tidak akan tiba-tiba kehilangan fitur apa pun.
+
+**Tidak perlu migrasi database** untuk fitur ini — semuanya memakai tabel `settings` yang generik
+dan sudah ada dari update sebelumnya.
+
+---
+
+## 36. Pengembangan Lokal
 
 ```bash
 npx wrangler dev

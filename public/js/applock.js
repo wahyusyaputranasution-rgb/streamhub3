@@ -18,6 +18,18 @@
   }
   if (!isRunningInstalled()) return;
 
+  // Cek saklar master dari dashboard admin — kalau admin matikan fitur PIN
+  // secara keseluruhan, jangan tampilkan apa pun.
+  fetch("/api/settings/public")
+    .then((res) => res.json())
+    .then((payload) => {
+      const settings = (payload && payload.data) || {};
+      if (settings.feature_pin_enabled === "0") return;
+      initAppLock();
+    })
+    .catch(() => initAppLock()); // kalau gagal cek setting, fallback tetap aktifkan (aman secara default)
+
+  function initAppLock() {
   const PIN_HASH_KEY = "applock_pin_hash";
   const RECOVERY_Q_KEY = "applock_recovery_q";
   const RECOVERY_A_HASH_KEY = "applock_recovery_a_hash";
@@ -273,4 +285,5 @@
   } else {
     showSetupScreen();
   }
+  } // tutup initAppLock
 })();

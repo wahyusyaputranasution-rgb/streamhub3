@@ -19,6 +19,17 @@
   function showPrompt() {
     if (Notification.permission === "granted") return; // sudah diizinkan sebelumnya, tidak perlu tanya lagi
 
+    fetch("/api/settings/public")
+      .then((res) => res.json())
+      .then((payload) => {
+        const settings = (payload && payload.data) || {};
+        if (settings.feature_push_enabled === "0") return;
+        renderPromptBar();
+      })
+      .catch(() => renderPromptBar());
+  }
+
+  function renderPromptBar() {
     const bar = document.createElement("div");
     bar.id = "push-prompt";
     bar.style.cssText =

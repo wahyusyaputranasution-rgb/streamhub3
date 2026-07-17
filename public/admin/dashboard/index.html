@@ -163,7 +163,100 @@
     <!-- TAB: PENGATURAN -->
     <section class="tab-panel" id="tab-pengaturan" style="display:none;">
       <div class="panel">
-        <div class="panel-title"><h2>Pengaturan Website</h2></div>
+        <div class="panel-title"><h2>Identitas Situs</h2></div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Ganti nama & logo yang tampil di seluruh halaman publik, tanpa perlu edit kode.
+        </p>
+        <form id="siteIdentityForm">
+          <div class="field">
+            <label for="siteNameInput">Nama Situs</label>
+            <input type="text" id="siteNameInput" placeholder="StreamHub">
+          </div>
+          <div class="field">
+            <label for="siteDescriptionInput">Deskripsi Singkat Situs</label>
+            <textarea id="siteDescriptionInput" placeholder="Platform streaming video modern..."></textarea>
+          </div>
+          <div class="field">
+            <label for="siteLogoInput">Logo (URL atau upload)</label>
+            <input type="url" id="siteLogoInput" placeholder="https://... (kosongkan untuk pakai teks nama situs)">
+            <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+              <label for="logoFileInput" class="btn" style="cursor:pointer;margin:0;">Upload dari HP</label>
+              <input type="file" id="logoFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;">
+              <span id="logoUploadStatus" style="font-size:0.78rem;color:var(--text-dim);"></span>
+            </div>
+            <img id="logoPreview" style="max-height:40px;margin-top:8px;display:none;">
+          </div>
+          <div class="field-error" id="siteIdentityError"></div>
+          <button type="submit" class="btn btn-primary">Simpan Identitas Situs</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><h2>Mode Maintenance</h2></div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Kalau diaktifkan, semua pengunjung situs (bukan dashboard admin) akan melihat halaman
+          "Sedang Perbaikan" alih-alih konten biasa. Dashboard admin tetap bisa diakses normal.
+        </p>
+        <form id="maintenanceForm">
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" id="maintenanceEnabledInput" style="width:auto;">
+              <span>Aktifkan Mode Maintenance</span>
+            </label>
+          </div>
+          <div class="field">
+            <label for="maintenanceMessageInput">Pesan untuk Pengunjung</label>
+            <textarea id="maintenanceMessageInput" placeholder="Kami sedang melakukan sedikit perbaikan. Silakan kembali beberapa saat lagi."></textarea>
+          </div>
+          <div class="field-error" id="maintenanceFormError"></div>
+          <button type="submit" class="btn btn-primary">Simpan Mode Maintenance</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><h2>Kontrol Fitur</h2></div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Nyalakan/matikan fitur secara keseluruhan di situs, tanpa perlu hapus data atau
+          konfigurasi yang sudah dibuat.
+        </p>
+        <form id="featureTogglesForm">
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" id="featurePinInput" style="width:auto;" checked>
+              <span>Kunci PIN Aplikasi (saat di-install sebagai app)</span>
+            </label>
+          </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" id="featurePushInput" style="width:auto;" checked>
+              <span>Push Notification (banner "Aktifkan Notifikasi")</span>
+            </label>
+          </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" id="featureAdsInput" style="width:auto;" checked>
+              <span>Iklan (banner, popunder, smartlink dari tab Iklan)</span>
+            </label>
+          </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" id="featureSponsorInput" style="width:auto;" checked>
+              <span>Iklan Sponsor (kartu menyatu di grid)</span>
+            </label>
+          </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" id="featureTrackingInput" style="width:auto;" checked>
+              <span>Tracking Pengguna (statistik perangkat & online/offline)</span>
+            </label>
+          </div>
+          <div class="field-error" id="featureTogglesError"></div>
+          <button type="submit" class="btn btn-primary">Simpan Kontrol Fitur</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><h2>Pengaturan Website (Customer Service)</h2></div>
         <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
           Pengaturan di sini langsung terhubung ke situs publik — tidak perlu edit kode atau
           deploy ulang.
@@ -497,6 +590,12 @@
           <label for="sponsorEndInput">Tanggal Berakhir</label>
           <input type="date" id="sponsorEndInput" required>
         </div>
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="sponsorEnabledInput" style="width:auto;" checked>
+          <span>Aktifkan sponsor ini (bisa dimatikan kapan saja tanpa menghapus data)</span>
+        </label>
       </div>
       <div class="field-error" id="sponsorFormError"></div>
       <div class="modal-actions">

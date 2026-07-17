@@ -91,10 +91,115 @@
       document.getElementById("telegramEnabledInput").checked = s.telegram_enabled === "1";
       document.getElementById("telegramBotTokenInput").value = s.telegram_bot_token || "";
       document.getElementById("telegramChatIdInput").value = s.telegram_chat_id || "";
+
+      // Identitas situs
+      document.getElementById("siteNameInput").value = s.site_name || "";
+      document.getElementById("siteDescriptionInput").value = s.site_description || "";
+      document.getElementById("siteLogoInput").value = s.site_logo_url || "";
+      if (s.site_logo_url) {
+        document.getElementById("logoPreview").src = s.site_logo_url;
+        document.getElementById("logoPreview").style.display = "block";
+      }
+
+      // Mode maintenance
+      document.getElementById("maintenanceEnabledInput").checked = s.maintenance_enabled === "1";
+      document.getElementById("maintenanceMessageInput").value = s.maintenance_message || "";
+
+      // Kontrol fitur (default: aktif kecuali eksplisit "0")
+      document.getElementById("featurePinInput").checked = s.feature_pin_enabled !== "0";
+      document.getElementById("featurePushInput").checked = s.feature_push_enabled !== "0";
+      document.getElementById("featureAdsInput").checked = s.feature_ads_enabled !== "0";
+      document.getElementById("featureSponsorInput").checked = s.feature_sponsor_enabled !== "0";
+      document.getElementById("featureTrackingInput").checked = s.feature_tracking_enabled !== "0";
     } catch {
       // Diamkan, form tetap kosong kalau gagal
     }
   }
+
+  // ---------- Identitas Situs ----------
+  const siteIdentityForm = document.getElementById("siteIdentityForm");
+  const siteIdentityError = document.getElementById("siteIdentityError");
+  const logoFileInput = document.getElementById("logoFileInput");
+  const logoUploadStatus = document.getElementById("logoUploadStatus");
+  const logoPreview = document.getElementById("logoPreview");
+
+  logoFileInput.addEventListener("change", async () => {
+    const file = logoFileInput.files[0];
+    if (!file) return;
+    logoUploadStatus.textContent = "Mengompres & mengupload...";
+    try {
+      const dataUrl = await compressImage(file, 320, 0.85);
+      const [meta, base64Data] = dataUrl.split(",");
+      const contentType = meta.match(/data:(.*);base64/)[1];
+      const res = await Utils.api("/api/uploads", { method: "POST", needsCsrf: true, body: { contentType, data: base64Data } });
+      document.getElementById("siteLogoInput").value = res.data.url;
+      logoPreview.src = res.data.url;
+      logoPreview.style.display = "block";
+      logoUploadStatus.textContent = "Berhasil diupload ✓";
+    } catch (err) {
+      logoUploadStatus.textContent = err.message || "Gagal upload logo";
+    }
+  });
+
+  siteIdentityForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    siteIdentityError.style.display = "none";
+    const settings = {
+      site_name: document.getElementById("siteNameInput").value.trim(),
+      site_description: document.getElementById("siteDescriptionInput").value.trim(),
+      site_logo_url: document.getElementById("siteLogoInput").value.trim(),
+    };
+    try {
+      await Utils.api("/api/settings", { method: "PUT", body: { settings }, needsCsrf: true });
+      showToast("Identitas situs disimpan");
+    } catch (err) {
+      siteIdentityError.textContent = err.message || "Gagal menyimpan";
+      siteIdentityError.style.display = "block";
+    }
+  });
+
+  // ---------- Mode Maintenance ----------
+  const maintenanceForm = document.getElementById("maintenanceForm");
+  const maintenanceFormError = document.getElementById("maintenanceFormError");
+
+  maintenanceForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    maintenanceFormError.style.display = "none";
+    const settings = {
+      maintenance_enabled: document.getElementById("maintenanceEnabledInput").checked ? "1" : "0",
+      maintenance_message: document.getElementById("maintenanceMessageInput").value.trim(),
+    };
+    try {
+      await Utils.api("/api/settings", { method: "PUT", body: { settings }, needsCsrf: true });
+      showToast(settings.maintenance_enabled === "1" ? "Mode Maintenance diaktifkan" : "Mode Maintenance dimatikan");
+    } catch (err) {
+      maintenanceFormError.textContent = err.message || "Gagal menyimpan";
+      maintenanceFormError.style.display = "block";
+    }
+  });
+
+  // ---------- Kontrol Fitur ----------
+  const featureTogglesForm = document.getElementById("featureTogglesForm");
+  const featureTogglesError = document.getElementById("featureTogglesError");
+
+  featureTogglesForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    featureTogglesError.style.display = "none";
+    const settings = {
+      feature_pin_enabled: document.getElementById("featurePinInput").checked ? "1" : "0",
+      feature_push_enabled: document.getElementById("featurePushInput").checked ? "1" : "0",
+      feature_ads_enabled: document.getElementById("featureAdsInput").checked ? "1" : "0",
+      feature_sponsor_enabled: document.getElementById("featureSponsorInput").checked ? "1" : "0",
+      feature_tracking_enabled: document.getElementById("featureTrackingInput").checked ? "1" : "0",
+    };
+    try {
+      await Utils.api("/api/settings", { method: "PUT", body: { settings }, needsCsrf: true });
+      showToast("Kontrol fitur disimpan");
+    } catch (err) {
+      featureTogglesError.textContent = err.message || "Gagal menyimpan";
+      featureTogglesError.style.display = "block";
+    }
+  });
 
   siteSettingsForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -636,6 +741,7 @@
   }
 
   function sponsorStatusBadge(ad) {
+    if (!ad.enabled) return '<span class="badge draft">Nonaktif</span>';
     const today = new Date().toISOString().slice(0, 10);
     if (today < ad.start_date) return '<span class="badge draft">Terjadwal</span>';
     if (today > ad.end_date) return '<span class="badge draft">Kedaluwarsa</span>';
@@ -657,6 +763,7 @@
           <td>${formatDateOnly(s.start_date)} s/d ${formatDateOnly(s.end_date)}</td>
           <td>${sponsorStatusBadge(s)}</td>
           <td>
+            <button class="icon-btn" data-toggle-sponsor="${s.id}" data-enabled="${s.enabled}">${s.enabled ? "Nonaktifkan" : "Aktifkan"}</button>
             <button class="icon-btn" data-edit-sponsor="${s.id}">Edit</button>
             <button class="icon-btn danger" data-delete-sponsor="${s.id}" data-name="${Utils.escapeHtml(s.name)}">Hapus</button>
           </td>
@@ -665,6 +772,7 @@
             .join("")
         : `<tr><td colspan="5">Belum ada sponsor. Klik "+ Tambah Sponsor" untuk mulai.</td></tr>`;
 
+      tbody.querySelectorAll("[data-toggle-sponsor]").forEach((btn) => btn.addEventListener("click", () => toggleSponsor(btn.dataset.toggleSponsor, btn.dataset.enabled === "1")));
       tbody.querySelectorAll("[data-edit-sponsor]").forEach((btn) => btn.addEventListener("click", () => openSponsorModal(btn.dataset.editSponsor)));
       tbody.querySelectorAll("[data-delete-sponsor]").forEach((btn) =>
         btn.addEventListener("click", () => confirmAction(`Hapus sponsor "${btn.dataset.name}"?`, () => deleteSponsor(btn.dataset.deleteSponsor)))
@@ -681,6 +789,32 @@
       loadSponsorsTable();
     } catch (err) {
       showToast(err.message || "Gagal menghapus sponsor");
+    }
+  }
+
+  async function toggleSponsor(id, currentlyEnabled) {
+    try {
+      const res = await Utils.api("/api/sponsor-ads");
+      const s = (res.data || []).find((item) => String(item.id) === String(id));
+      if (!s) throw new Error("Sponsor tidak ditemukan");
+
+      await Utils.api(`/api/sponsor-ads/${id}`, {
+        method: "PUT",
+        needsCsrf: true,
+        body: {
+          name: s.name,
+          title: s.title,
+          imageUrl: s.image_url,
+          linkUrl: s.link_url,
+          startDate: formatDateOnly(s.start_date),
+          endDate: formatDateOnly(s.end_date),
+          enabled: !currentlyEnabled,
+        },
+      });
+      showToast(currentlyEnabled ? "Sponsor dinonaktifkan" : "Sponsor diaktifkan");
+      loadSponsorsTable();
+    } catch (err) {
+      showToast(err.message || "Gagal mengubah status sponsor");
     }
   }
 
@@ -732,6 +866,7 @@
         document.getElementById("sponsorLinkInput").value = s.link_url;
         document.getElementById("sponsorStartInput").value = formatDateOnly(s.start_date);
         document.getElementById("sponsorEndInput").value = formatDateOnly(s.end_date);
+        document.getElementById("sponsorEnabledInput").checked = !!s.enabled;
         sponsorPreview.src = s.image_url;
         sponsorPreview.style.display = "block";
       } catch (err) {
@@ -753,6 +888,7 @@
       linkUrl: document.getElementById("sponsorLinkInput").value.trim(),
       startDate: document.getElementById("sponsorStartInput").value,
       endDate: document.getElementById("sponsorEndInput").value,
+      enabled: document.getElementById("sponsorEnabledInput").checked,
     };
 
     try {
