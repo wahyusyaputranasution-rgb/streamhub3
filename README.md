@@ -659,7 +659,24 @@ dipakai secara resmi.
 
 ---
 
-## 39. Pengembangan Lokal
+## 40. Halaman Kerjasama & Sponsor
+
+Halaman baru di `/kerjasama/`, bisa diakses lewat menu titik-3 di semua halaman. Isinya
+penjelasan singkat jenis kerjasama yang bisa dilakukan (iklan, endorse, dll) + tombol kontak.
+
+**Cara atur kontaknya:**
+1. Dashboard → tab Pengaturan → panel **"Kontak Kerjasama & Sponsor"**
+2. Isi **Link Kontak** (WhatsApp, email `mailto:`, atau link apa saja) dan **Label**
+3. Simpan
+
+Kalau dikosongkan, halaman otomatis pakai kontak Customer Service yang sama sebagai fallback —
+jadi tidak wajib diisi terpisah kalau kontaknya memang sama.
+
+**Tidak perlu migrasi database** — masih numpang tabel `settings` yang sudah ada.
+
+---
+
+## 41. Pengembangan Lokal
 
 ```bash
 npx wrangler dev

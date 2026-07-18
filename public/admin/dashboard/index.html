@@ -282,6 +282,27 @@
       </div>
 
       <div class="panel">
+        <div class="panel-title"><h2>Kontak Kerjasama & Sponsor</h2></div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Kontak yang ditampilkan di halaman <code>/kerjasama/</code> (bisa diakses lewat menu
+          titik-3 di situs), untuk brand/pihak yang mau beriklan atau kerjasama. Boleh beda
+          dengan kontak Customer Service di atas (kosongkan untuk pakai kontak CS yang sama).
+        </p>
+        <form id="kerjasamaSettingsForm">
+          <div class="field">
+            <label for="kerjasamaLinkInput">Link Kontak Kerjasama</label>
+            <input type="text" id="kerjasamaLinkInput" placeholder="https://wa.me/62812xxxxxxx atau mailto:bisnis@domain.com">
+          </div>
+          <div class="field">
+            <label for="kerjasamaLabelInput">Label (teks di atas tombol kontak)</label>
+            <input type="text" id="kerjasamaLabelInput" placeholder="Hubungi kami untuk kerjasama">
+          </div>
+          <div class="field-error" id="kerjasamaSettingsError"></div>
+          <button type="submit" class="btn btn-primary">Simpan Kontak Kerjasama</button>
+        </form>
+      </div>
+
+      <div class="panel">
         <div class="panel-title"><h2>Integrasi Telegram (Auto-post Video Baru)</h2></div>
         <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
           Setiap video berstatus "Published" (manual atau lewat auto-publish terjadwal) otomatis

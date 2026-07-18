@@ -88,6 +88,8 @@
       document.getElementById("csEnabledInput").checked = s.cs_enabled === "1";
       document.getElementById("csLinkInput").value = s.cs_link || "";
       document.getElementById("csLabelInput").value = s.cs_label || "";
+      document.getElementById("kerjasamaLinkInput").value = s.kerjasama_link || "";
+      document.getElementById("kerjasamaLabelInput").value = s.kerjasama_label || "";
       document.getElementById("telegramEnabledInput").checked = s.telegram_enabled === "1";
       document.getElementById("telegramBotTokenInput").value = s.telegram_bot_token || "";
       document.getElementById("telegramChatIdInput").value = s.telegram_chat_id || "";
@@ -215,6 +217,26 @@
     } catch (err) {
       siteSettingsError.textContent = err.message || "Gagal menyimpan pengaturan";
       siteSettingsError.style.display = "block";
+    }
+  });
+
+  // ---------- Kontak Kerjasama & Sponsor ----------
+  const kerjasamaSettingsForm = document.getElementById("kerjasamaSettingsForm");
+  const kerjasamaSettingsError = document.getElementById("kerjasamaSettingsError");
+
+  kerjasamaSettingsForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    kerjasamaSettingsError.style.display = "none";
+    const settings = {
+      kerjasama_link: document.getElementById("kerjasamaLinkInput").value.trim(),
+      kerjasama_label: document.getElementById("kerjasamaLabelInput").value.trim(),
+    };
+    try {
+      await Utils.api("/api/settings", { method: "PUT", body: { settings }, needsCsrf: true });
+      showToast("Kontak kerjasama disimpan");
+    } catch (err) {
+      kerjasamaSettingsError.textContent = err.message || "Gagal menyimpan pengaturan";
+      kerjasamaSettingsError.style.display = "block";
     }
   });
 

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kerjasama & Sponsor - StreamHub</title>
+<meta name="description" content="Ingin beriklan atau kerjasama sponsor di StreamHub? Hubungi kami.">
+<link rel="canonical" href="/kerjasama/">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0b0c10">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .legal-content { max-width: 640px; margin: 0 auto; padding: 24px 0 60px; line-height: 1.7; }
+  .legal-content h1 { font-size: 1.4rem; margin-bottom: 10px; }
+  .legal-content p { color: var(--text-dim); font-size: 0.92rem; }
+  .legal-content ul { padding-left: 20px; color: var(--text-dim); font-size: 0.92rem; }
+  .contact-box {
+    margin-top: 24px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); text-align: center;
+  }
+  .contact-box p { margin: 0 0 14px; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="/" class="logo">Stream<span>Hub</span></a>
+    <nav class="main-nav">
+      <a href="/">Home</a>
+      <a href="/category/">Kategori</a>
+      <a href="/search/">Cari</a>
+    </nav>
+    <button class="mobile-menu-btn" id="siteMenuBtn" aria-label="Menu" style="margin-left:auto;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="siteMenuDropdown" class="site-menu-dropdown">
+  <a href="/">Home</a>
+  <a href="/category/">Kategori</a>
+  <a href="/kerjasama/">Kerjasama & Sponsor</a>
+  <a href="/privacy/">Kebijakan Privasi</a>
+  <a href="/terms/">Syarat & Ketentuan</a>
+</div>
+
+<main class="container">
+  <div class="legal-content">
+    <h1>Kerjasama & Sponsor</h1>
+    <p>Tertarik memasang iklan, endorse produk, atau menjalin kerjasama lain dengan StreamHub?
+    Kami terbuka untuk berbagai bentuk kolaborasi, di antaranya:</p>
+    <ul>
+      <li>Iklan banner / native di berbagai halaman situs</li>
+      <li>Endorse produk atau brand (kartu sponsor menyatu di tampilan video)</li>
+      <li>Kerjasama konten atau promosi lainnya</li>
+    </ul>
+    <p>Silakan hubungi kami lewat kontak di bawah untuk mendiskusikan detail dan penawaran
+    kerjasama.</p>
+
+    <div class="contact-box" id="kerjasamaContactBox">
+      <p id="kerjasamaLabel">Hubungi kami untuk kerjasama</p>
+      <a href="#" id="kerjasamaLink" class="btn btn-primary" target="_blank" rel="noopener">Hubungi Sekarang</a>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">&copy; <span id="year"></span> StreamHub. Semua hak dilindungi.</div>
+</footer>
+
+<script>
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  fetch("/api/settings/public")
+    .then((res) => res.json())
+    .then((payload) => {
+      const settings = (payload && payload.data) || {};
+      const link = settings.kerjasama_link || settings.cs_link || "";
+      const label = settings.kerjasama_label || "Hubungi kami untuk kerjasama";
+
+      document.getElementById("kerjasamaLabel").textContent = label;
+      const linkEl = document.getElementById("kerjasamaLink");
+      if (link) {
+        linkEl.href = link;
+      } else {
+        document.getElementById("kerjasamaContactBox").innerHTML =
+          '<p>Kontak kerjasama belum tersedia saat ini.</p>';
+      }
+    })
+    .catch(() => {});
+</script>
+<script src="/js/site-config.js"></script>
+<script src="/js/site-menu.js"></script>
+</body>
+</html>
