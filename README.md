@@ -630,7 +630,36 @@ dan sudah ada dari update sebelumnya.
 
 ---
 
-## 36. Pengembangan Lokal
+## 37. Perbaikan: Deskripsi Situs Sekarang Benar-benar Terhubung
+
+Sebelumnya, field "Deskripsi Singkat Situs" di dashboard tersimpan tapi **tidak diterapkan ke
+mana pun** — ini sudah diperbaiki. Sekarang deskripsi otomatis muncul di:
+- Teks bawah judul halaman Home (langsung kelihatan visual)
+- Meta description (untuk SEO & preview link di WhatsApp/Telegram)
+
+## 38. Menu Titik-3 (Kebijakan Privasi & Syarat Ketentuan)
+
+Ikon titik-3 baru muncul di pojok kanan atas semua halaman publik, di samping ikon menu yang
+sudah ada. Diklik akan membuka dropdown berisi:
+- Home
+- Kategori
+- Kebijakan Privasi
+- Syarat & Ketentuan
+
+Dua halaman baru (`/privacy/` dan `/terms/`) sudah dibuatkan dengan isi standar (bisa Anda edit
+langsung isinya di `public/privacy/index.html` dan `public/terms/index.html` sesuai kebutuhan).
+Halaman ini **sengaja tidak dikunci PIN** meski fitur App Lock aktif — supaya tetap bisa diakses
+bebas oleh siapa saja (termasuk jaringan iklan yang biasanya mensyaratkan halaman ini bisa
+diakses publik untuk proses approval, seperti Adsterra). Link juga ditambahkan di footer semua
+halaman dan otomatis masuk ke `sitemap.xml`.
+
+**Catatan:** isi kedua halaman ini adalah teks standar/umum, bukan nasihat hukum — sebaiknya
+Anda tinjau dan sesuaikan sendiri isinya (terutama kontak & detail spesifik situs Anda) sebelum
+dipakai secara resmi.
+
+---
+
+## 39. Pengembangan Lokal
 
 ```bash
 npx wrangler dev

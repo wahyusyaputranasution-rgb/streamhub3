@@ -10,7 +10,17 @@
       const settings = (payload && payload.data) || {};
 
       const siteName = settings.site_name && settings.site_name.trim();
+      const siteDescription = settings.site_description && settings.site_description.trim();
       const logoUrl = settings.site_logo_url && settings.site_logo_url.trim();
+
+      if (siteDescription) {
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) metaDesc.setAttribute("content", siteDescription);
+        const ogDesc = document.querySelector('meta[property="og:description"]');
+        if (ogDesc) ogDesc.setAttribute("content", siteDescription);
+        const heroSubtitle = document.getElementById("heroSubtitle");
+        if (heroSubtitle) heroSubtitle.textContent = siteDescription;
+      }
 
       if (siteName) {
         // Ganti teks di semua elemen logo (header/sidebar)

@@ -448,6 +448,30 @@ button { font-family: inherit; cursor: pointer; }
   text-transform: uppercase;
 }
 
+/* ===== Site menu dropdown (titik-3) ===== */
+.site-menu-dropdown {
+  position: fixed;
+  top: 60px;
+  right: 16px;
+  z-index: 200;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 6px;
+  display: none;
+  flex-direction: column;
+  min-width: 180px;
+}
+.site-menu-dropdown.show { display: flex; }
+.site-menu-dropdown a {
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.site-menu-dropdown a:hover { background: var(--bg-card); }
+
 /* ===== Ad slot ===== */
 .ad-slot {
   margin: 16px 0;

@@ -30,8 +30,18 @@
     <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
     </button>
+    <button class="mobile-menu-btn" id="siteMenuBtn" aria-label="Menu lainnya">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+    </button>
   </div>
 </header>
+
+<div id="siteMenuDropdown" class="site-menu-dropdown">
+  <a href="/">Home</a>
+  <a href="/category/">Kategori</a>
+  <a href="/privacy/">Kebijakan Privasi</a>
+  <a href="/terms/">Syarat &amp; Ketentuan</a>
+</div>
 
 <main class="container">
   <section class="hero">
@@ -46,11 +56,12 @@
 </main>
 
 <footer class="site-footer">
-  <div class="container">&copy; <span id="year"></span> StreamHub. Semua hak dilindungi.</div>
+  <div class="container">&copy; <span id="year"></span> StreamHub. Semua hak dilindungi. &middot; <a href="/privacy/" style="color:inherit;text-decoration:underline;">Kebijakan Privasi</a> &middot; <a href="/terms/" style="color:inherit;text-decoration:underline;">Syarat &amp; Ketentuan</a></div>
 </footer>
 
 <script src="/js/utils.js"></script>
 <script src="/js/site-config.js"></script>
+<script src="/js/site-menu.js"></script>
 <script src="/js/search.js"></script>
 <script src="/js/ads.js"></script>
 <script src="/js/pwa.js"></script>

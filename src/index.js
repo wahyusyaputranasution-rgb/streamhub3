@@ -944,7 +944,7 @@ async function handleStats(request, env) {
 
 async function handleSitemap(env) {
   const siteUrl = (env.SITE_URL || "https://your-project.workers.dev").replace(/\/$/, "");
-  const staticUrls = ["/", "/search/", "/category/"];
+  const staticUrls = ["/", "/search/", "/category/", "/privacy/", "/terms/"];
   let categories = [];
   let videos = [];
   try {

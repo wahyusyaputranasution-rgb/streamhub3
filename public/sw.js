@@ -3,7 +3,7 @@
 // plus cache ringan untuk aset statis (CSS/JS/ikon) supaya loading lebih cepat.
 // Halaman & data API TIDAK di-cache, supaya konten video selalu up-to-date.
 
-const CACHE_NAME = "streamhub-static-v3";
+const CACHE_NAME = "streamhub-static-v4";
 const STATIC_ASSETS = [
   "/css/style.css",
   "/css/admin.css",
