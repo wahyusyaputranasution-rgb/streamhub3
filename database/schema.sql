@@ -146,3 +146,37 @@ CREATE INDEX IF NOT EXISTS idx_categories_slug     ON categories(slug);
 CREATE INDEX IF NOT EXISTS idx_view_logs_lookup    ON view_logs(video_id, ip_hash, viewed_at);
 CREATE INDEX IF NOT EXISTS idx_login_attempts_ip   ON login_attempts(ip_hash, attempted_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires    ON sessions(expires_at);
+
+-- ============================================================
+-- Adsterra Revenue Dashboard (fitur baru, tidak mengubah tabel lain)
+-- ============================================================
+
+-- Cache statistik Adsterra. Satu baris per snapshot: untuk HARI INI, baris baru
+-- ditambahkan tiap kali sync berhasil (memberi data intraday untuk grafik 24 jam).
+-- Untuk hari-hari sebelumnya, baris di-upsert (1 baris final per tanggal).
+CREATE TABLE IF NOT EXISTS adsterra_stats (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  date           TEXT NOT NULL,
+  revenue        REAL NOT NULL DEFAULT 0,
+  impressions    INTEGER NOT NULL DEFAULT 0,
+  clicks         INTEGER NOT NULL DEFAULT 0,
+  ctr            REAL NOT NULL DEFAULT 0,
+  cpm            REAL NOT NULL DEFAULT 0,
+  requests       INTEGER NOT NULL DEFAULT 0,
+  fill_rate      REAL NOT NULL DEFAULT 0,
+  json_response  TEXT,
+  updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_adsterra_stats_date ON adsterra_stats(date, updated_at);
+
+-- Log setiap kali sync ke Adsterra API dilakukan (sukses maupun gagal)
+CREATE TABLE IF NOT EXISTS adsterra_sync_log (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  synced_at        TEXT NOT NULL DEFAULT (datetime('now')),
+  response_time_ms INTEGER,
+  status           TEXT NOT NULL,
+  error_message    TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_adsterra_sync_log_time ON adsterra_sync_log(synced_at);

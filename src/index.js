@@ -49,6 +49,7 @@ import {
 import { normalizeEmbedUrl } from "../lib/embed.js";
 import { sendPushNotification } from "../lib/webpush.js";
 import { sendTelegramNotification } from "../lib/telegram.js";
+import { isCacheValid, syncAdsterraData, getDashboardDataFromCache } from "../lib/adsterra.js";
 
 const SECURITY_HEADERS = {
   "X-Content-Type-Options": "nosniff",
@@ -817,6 +818,32 @@ async function handleSponsorAdById(request, env, id) {
   return fail("Method tidak diizinkan", 405);
 }
 
+// ================= ADSTERRA REVENUE DASHBOARD =================
+
+async function handleAdsterraDashboard(request, env) {
+  if (request.method !== "GET") return fail("Method tidak diizinkan", 405);
+  const session = await requireAuth(request, env.DB);
+  if (!session) return unauthorized();
+
+  let syncError = null;
+  try {
+    const cacheValid = await isCacheValid(env);
+    if (!cacheValid) {
+      const result = await syncAdsterraData(env);
+      if (!result.ok) syncError = result.error;
+    }
+  } catch (err) {
+    syncError = err.message || String(err);
+  }
+
+  try {
+    const data = await getDashboardDataFromCache(env);
+    return ok(data, syncError ? { warning: `Gagal sync data terbaru, menampilkan cache terakhir: ${syncError}` } : {});
+  } catch (err) {
+    return serverError(err);
+  }
+}
+
 // ================= ADS =================
 
 const ALLOWED_PLACEMENTS = [
@@ -1037,6 +1064,8 @@ export default {
       } else if (/^\/api\/sponsor-ads\/\d+$/.test(path)) {
         const id = parseInt(path.split("/").pop(), 10);
         response = await handleSponsorAdById(request, env, id);
+      } else if (path === "/api/adsterra") {
+        response = await handleAdsterraDashboard(request, env);
       } else if (path === "/api/videos") {
         response = await handleVideosCollection(request, env, url);
       } else if (/^\/api\/videos\/\d+$/.test(path)) {

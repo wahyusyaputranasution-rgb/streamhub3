@@ -676,7 +676,82 @@ jadi tidak wajib diisi terpisah kalau kontaknya memang sama.
 
 ---
 
-## 41. Pengembangan Lokal
+## 42. Adsterra Revenue Dashboard
+
+Dashboard statistik pendapatan Adsterra profesional di tab **💲 Monetization**, mengambil data
+langsung dari **Adsterra Publisher API** (bukan scraping), dengan cache di D1 supaya tidak
+membebani API setiap kali dashboard dibuka.
+
+### Cara Setup
+
+**1. Dapatkan API Key dari Adsterra**
+- Login ke akun Adsterra Anda → **Settings** → tab **API** → **Generate New Token**
+- Salin token yang muncul
+
+**2. Simpan sebagai Cloudflare Secret (WAJIB, bukan di wrangler.toml)**
+- Buka **Cloudflare Dashboard → Worker Anda → Settings → Variables and Secrets**
+- Klik **Add** → pilih tipe **Secret** (bukan "Variable" biasa — ini penting supaya nilainya
+  terenkripsi dan tidak pernah terlihat siapa pun, termasuk di kode yang ter-commit ke Git)
+- Tambahkan:
+  - `ADSTERRA_API_KEY` = token dari langkah 1
+  - `ADSTERRA_DOMAIN_ID` = ID domain Anda di akun Adsterra (isi kalau akun Anda mengelola lebih
+    dari satu domain/website; kosongkan kalau cuma satu)
+- Klik **Deploy** untuk menerapkan
+
+**3. Jalankan migrasi database:**
+```bash
+wrangler d1 execute streaming_db --remote --file=./database/migration_adsterra.sql
+```
+
+**4. Buka dashboard**, tab **💲 Monetization** akan otomatis sync data pertama kalinya.
+
+### Cara Kerja
+
+- Setiap dashboard dibuka, sistem cek: **cache masih di bawah 5 menit?** Kalau ya, pakai cache
+  (tidak panggil Adsterra API sama sekali). Kalau sudah lewat 5 menit, sync data baru, simpan ke
+  D1, baru ditampilkan.
+- Auto-refresh tiap 5 menit selama dashboard terbuka, tanpa reload halaman.
+- Kalau sync gagal (API down, token salah, dll), dashboard **tetap menampilkan data cache
+  terakhir** dengan pesan peringatan kuning + waktu "Terakhir diperbarui" — tidak pernah blank.
+
+### Isi Dashboard
+- **Card ringkasan**: Revenue, Impressions, Clicks, CTR, CPM, Fill Rate, Requests — masing-masing
+  dengan persentase naik/turun dibanding kemarin
+- **Grafik** (Canvas murni, tanpa library): Revenue 24 Jam, 7 Hari, 30 Hari, Impression, CTR, CPM
+  — ada hover/tooltip
+- **Top Countries** & **Top Placement** — tabel terurut dari revenue terbesar
+- **Revenue Feed** — daftar kenaikan revenue terkini (live, dari data snapshot yang tersimpan)
+- **Comparison** — hari ini vs kemarin, 7 hari vs minggu lalu, 30 hari vs bulan lalu (↑/↓ hijau/merah)
+- **Performance Score** — progress bar heuristik (revenue/CTR/CPM/fill rate dibanding ambang wajar)
+- **Revenue Prediction** — estimasi hari ini/minggu ini/bulan ini berdasarkan rata-rata historis
+- **Widget mini** di tab Dashboard utama: Revenue Today, Estimated Month, CTR, CPM, Impression
+
+### Catatan Teknis Penting
+
+**Soal nama field response Adsterra:** dokumentasi publik Adsterra tidak menyediakan contoh
+lengkap isi JSON response API. Kode di `lib/adsterra.js` menebak beberapa kemungkinan nama field
+secara defensif (mis. `revenue` vs `cost`, `impression` vs `impressions`). **Response mentah asli
+selalu tersimpan di kolom `json_response`** tabel `adsterra_stats` — kalau angka yang muncul di
+dashboard terlihat aneh/nol setelah setup pertama kali, buka isi `json_response` lewat D1 Console
+untuk melihat nama field sebenarnya dari akun Anda, lalu sesuaikan fungsi `parseStatRow` di
+`lib/adsterra.js`.
+
+**Logging:** setiap percobaan sync (sukses maupun gagal) tercatat di tabel `adsterra_sync_log`
+(waktu sync, waktu respons, status, pesan error) — bisa dicek langsung lewat D1 Console untuk
+keperluan debugging.
+
+**Keamanan:** API key tidak pernah dikirim ke browser sama sekali — seluruh komunikasi ke
+Adsterra terjadi di dalam Worker (`lib/adsterra.js`), endpoint `/api/adsterra` mewajibkan sesi
+admin yang valid sebelum mengembalikan data apa pun.
+
+**Fitur yang sudah ada sebelumnya tidak diubah/dihapus** — ini murni penambahan fitur baru
+(file baru: `lib/adsterra.js`, `public/js/admin-monetization.js`, `database/migration_adsterra.sql`;
+file yang diedit hanya untuk menambah wiring: `src/index.js`, `public/admin/dashboard/index.html`,
+`public/css/admin.css`, `public/js/admin-dashboard.js`, `wrangler.toml`).
+
+---
+
+## 43. Pengembangan Lokal
 
 ```bash
 npx wrangler dev

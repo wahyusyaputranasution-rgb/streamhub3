@@ -24,6 +24,7 @@
       <a href="#kategori" data-tab="kategori">Kategori</a>
       <a href="#iklan" data-tab="iklan">Iklan</a>
       <a href="#sponsor" data-tab="sponsor">Sponsor</a>
+      <a href="#monetization" data-tab="monetization">💲 Monetization</a>
       <a href="#pengaturan" data-tab="pengaturan">Pengaturan</a>
       <button class="logout-btn" id="logoutBtn">Logout</button>
     </nav>
@@ -41,6 +42,7 @@
       <button data-tab="kategori">Kategori</button>
       <button data-tab="iklan">Iklan</button>
       <button data-tab="sponsor">Sponsor</button>
+      <button data-tab="monetization">💲 Monetization</button>
       <button data-tab="pengaturan">Pengaturan</button>
     </div>
 
@@ -52,6 +54,20 @@
         <div class="stat-card"><div class="num" id="statTotalCategories">-</div><div class="label">Total Kategori</div></div>
         <div class="stat-card"><div class="num" id="statPublished">-</div><div class="label">Published</div></div>
         <div class="stat-card"><div class="num" id="statDraft">-</div><div class="label">Draft</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">
+          <h2>💲 Monetization</h2>
+          <span style="font-size:0.75rem;color:var(--text-dim);">Update otomatis tiap 5 menit</span>
+        </div>
+        <div class="stat-grid" style="margin-bottom:0;">
+          <div class="stat-card"><div class="num" id="widgetRevenueToday">-</div><div class="label">Revenue Today</div></div>
+          <div class="stat-card"><div class="num" id="widgetEstMonth">-</div><div class="label">Estimated Month</div></div>
+          <div class="stat-card"><div class="num" id="widgetCtr">-</div><div class="label">CTR</div></div>
+          <div class="stat-card"><div class="num" id="widgetCpm">-</div><div class="label">CPM</div></div>
+          <div class="stat-card"><div class="num" id="widgetImpressions">-</div><div class="label">Impression</div></div>
+        </div>
       </div>
 
       <div class="panel">
@@ -157,6 +173,98 @@
             <tbody id="sponsorsBody"></tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <!-- TAB: MONETIZATION -->
+    <section class="tab-panel" id="tab-monetization" style="display:none;">
+      <div class="panel-title" style="margin-bottom:12px;">
+        <span id="adsterraLastUpdated" style="font-size:0.78rem;color:var(--text-dim);">Memuat...</span>
+        <button class="btn" id="adsterraRefreshBtn" style="margin-left:auto;">🔄 Refresh</button>
+      </div>
+      <div id="adsterraWarning" style="display:none;background:rgba(241,196,15,0.12);color:#f1c40f;padding:10px 14px;border-radius:8px;font-size:0.82rem;margin-bottom:14px;"></div>
+
+      <!-- Card statistik hari ini -->
+      <div class="stat-grid" id="adsterraCards">
+        <div class="skeleton" style="height:90px;border-radius:12px;"></div>
+        <div class="skeleton" style="height:90px;border-radius:12px;"></div>
+        <div class="skeleton" style="height:90px;border-radius:12px;"></div>
+        <div class="skeleton" style="height:90px;border-radius:12px;"></div>
+      </div>
+
+      <!-- Grafik -->
+      <div class="panel">
+        <div class="panel-title"><h2>Revenue 24 Jam</h2></div>
+        <canvas id="chartRevenue24h" class="adsterra-chart" height="180"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><h2>Revenue 7 Hari</h2></div>
+        <canvas id="chartRevenue7d" class="adsterra-chart" height="180"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><h2>Revenue 30 Hari</h2></div>
+        <canvas id="chartRevenue30d" class="adsterra-chart" height="180"></canvas>
+      </div>
+      <div class="form-row">
+        <div class="panel">
+          <div class="panel-title"><h2>Impression (30 Hari)</h2></div>
+          <canvas id="chartImpression" class="adsterra-chart" height="140"></canvas>
+        </div>
+        <div class="panel">
+          <div class="panel-title"><h2>CTR (30 Hari)</h2></div>
+          <canvas id="chartCtr" class="adsterra-chart" height="140"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><h2>CPM (30 Hari)</h2></div>
+        <canvas id="chartCpm" class="adsterra-chart" height="140"></canvas>
+      </div>
+
+      <!-- Top Countries & Placement -->
+      <div class="panel">
+        <div class="panel-title"><h2>Top Countries</h2></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Negara</th><th>Revenue</th><th>Impression</th><th>CTR</th></tr></thead>
+            <tbody id="topCountriesBody"><tr><td colspan="4">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><h2>Top Placement</h2></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Placement</th><th>Revenue</th><th>CTR</th><th>CPM</th></tr></thead>
+            <tbody id="topPlacementBody"><tr><td colspan="4">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Revenue Feed -->
+      <div class="panel">
+        <div class="panel-title">
+          <h2>Revenue Feed</h2>
+          <span style="font-size:0.72rem;color:var(--text-dim);">Live</span>
+        </div>
+        <div id="revenueFeed" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;"></div>
+      </div>
+
+      <!-- Comparison -->
+      <div class="panel">
+        <div class="panel-title"><h2>Comparison</h2></div>
+        <div id="comparisonGrid" class="stat-grid" style="margin-bottom:0;"></div>
+      </div>
+
+      <!-- Performance Score -->
+      <div class="panel">
+        <div class="panel-title"><h2>Performance Score</h2></div>
+        <div id="performanceScoreList"></div>
+      </div>
+
+      <!-- Revenue Prediction -->
+      <div class="panel">
+        <div class="panel-title"><h2>Revenue Prediction</h2></div>
+        <div class="stat-grid" id="predictionGrid" style="margin-bottom:0;"></div>
       </div>
     </section>
 
@@ -643,6 +751,7 @@
 
 <script src="/js/utils.js"></script>
 <script src="/js/admin-dashboard.js"></script>
+<script src="/js/admin-monetization.js"></script>
 <script src="/js/admin-pwa.js"></script>
 </body>
 </html>

@@ -30,10 +30,11 @@
     kategori: document.getElementById("tab-kategori"),
     iklan: document.getElementById("tab-iklan"),
     sponsor: document.getElementById("tab-sponsor"),
+    monetization: document.getElementById("tab-monetization"),
     pengaturan: document.getElementById("tab-pengaturan"),
   };
   const topbarTitle = document.getElementById("topbarTitle");
-  const titles = { dashboard: "Dashboard", video: "Kelola Video", kategori: "Kelola Kategori", iklan: "Kelola Iklan", sponsor: "Iklan Sponsor", pengaturan: "Pengaturan" };
+  const titles = { dashboard: "Dashboard", video: "Kelola Video", kategori: "Kelola Kategori", iklan: "Kelola Iklan", sponsor: "Iklan Sponsor", monetization: "💲 Monetization", pengaturan: "Pengaturan" };
 
   function activateTab(tab) {
     Object.keys(tabPanels).forEach((key) => {
@@ -45,8 +46,15 @@
     if (tab === "dashboard") {
       loadStats();
       startDeviceStatsPolling();
+      window.AdminMonetization?.loadWidgetsOnly();
     } else {
       stopDeviceStatsPolling();
+    }
+    if (tab === "monetization") {
+      window.AdminMonetization?.load(true);
+      window.AdminMonetization?.startAutoRefresh();
+    } else {
+      window.AdminMonetization?.stopAutoRefresh();
     }
     if (tab === "video") loadVideosTable();
     if (tab === "kategori") loadCategoriesTable();

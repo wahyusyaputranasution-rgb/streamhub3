@@ -203,3 +203,35 @@ table.data-table td.title-cell { white-space: normal; max-width: 260px; }
 
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+
+/* ===== Adsterra Monetization Dashboard ===== */
+.adsterra-chart { width: 100%; height: 180px; display: block; }
+.adsterra-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.adsterra-card .icon { font-size: 1.3rem; margin-bottom: 6px; }
+.adsterra-card .value { font-size: 1.25rem; font-weight: 700; }
+.adsterra-card .label { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+.adsterra-card .change { font-size: 0.75rem; margin-top: 6px; font-weight: 600; }
+.adsterra-card .change.up { color: #2ecc71; }
+.adsterra-card .change.down { color: #ff3860; }
+
+.feed-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; background: var(--bg-elevated);
+  font-size: 0.8rem; animation: fadeIn 0.3s ease both;
+}
+.feed-item .feed-time { color: var(--text-dim); min-width: 44px; }
+.feed-item .feed-amount { color: #2ecc71; font-weight: 700; min-width: 54px; }
+.feed-item .feed-country { color: var(--text); }
+.feed-item .feed-placement { margin-left: auto; color: var(--text-dim); font-size: 0.72rem; }
+
+.perf-score-row { margin-bottom: 14px; }
+.perf-score-row .perf-label { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px; }
+.perf-score-bar-bg { background: var(--bg-elevated); border-radius: 999px; height: 8px; overflow: hidden; }
+.perf-score-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #ff8080); border-radius: 999px; transition: width 0.6s ease; }

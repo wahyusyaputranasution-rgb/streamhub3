@@ -30,3 +30,19 @@ SITE_URL = "https://streamhubvideoplay1.jambrongv2.workers.dev"
 VAPID_PUBLIC_KEY = "BJYUy-NRWIg-0BuLuwHfLrmWFx6sa04XXqwibvEInvaZPnAf8A4RYHONWwFgmBs_i1LksHjdhhGjT04Ej_PZioA"
 VAPID_PRIVATE_KEY_JWK = "{\"key_ops\":[\"sign\"],\"ext\":true,\"kty\":\"EC\",\"x\":\"lhTL41FYiD7QG4u7Ad8uuZYXHqxrThderCJu8Qie9pk\",\"y\":\"PnAf8A4RYHONWwFgmBs_i1LksHjdhhGjT04Ej_PZioA\",\"crv\":\"P-256\",\"d\":\"l_iTKqDDLZacTYIhEum5WuUyA2bBbkD-QA1IMs-GSKY\"}"
 VAPID_SUBJECT = "mailto:admin@example.com"
+
+# ============================================================
+# Adsterra Revenue Dashboard - PENTING soal keamanan:
+# ADSTERRA_API_KEY dan ADSTERRA_DOMAIN_ID SENGAJA TIDAK dituliskan di sini
+# (file ini ikut ter-commit ke Git). Keduanya WAJIB diatur sebagai
+# Cloudflare "Secret" lewat Dashboard, bukan sebagai [vars] biasa:
+#
+#   Cloudflare Dashboard -> Worker Anda -> Settings -> Variables and Secrets
+#   -> Add -> pilih tipe "Secret" -> isi nama & nilainya, lalu Deploy.
+#
+# Variabel yang perlu ditambahkan sebagai Secret:
+#   ADSTERRA_API_KEY    = token API dari akun Adsterra Anda
+#                         (dashboard Adsterra -> Settings -> API -> Generate New Token)
+#   ADSTERRA_DOMAIN_ID  = ID domain/website Anda di akun Adsterra (opsional,
+#                         tergantung apakah akun Anda punya lebih dari satu domain)
+# ============================================================
