@@ -61,6 +61,72 @@
     document.getElementById("jsonLd").textContent = JSON.stringify(jsonLd);
   }
 
+  function showVideoPlayer(video) {
+    playerWrap.classList.remove("skeleton");
+    playerWrap.innerHTML = `<iframe src="${Utils.escapeHtml(video.embed_url)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+    // Hitung view (server melindungi dari spam refresh)
+    fetch(`/api/view/${video.id}`, { method: "POST" }).catch(() => {});
+  }
+
+  async function maybeShowPrerollAd(video) {
+    let ad = null;
+    try {
+      const res = await fetch("/api/preroll-ads/active");
+      const payload = await res.json();
+      ad = payload.success ? payload.data : null;
+    } catch {
+      ad = null;
+    }
+
+    if (!ad) {
+      showVideoPlayer(video);
+      return;
+    }
+
+    playerWrap.classList.remove("skeleton");
+    const skipSeconds = ad.skip_after_seconds || 5;
+
+    const mediaHtml =
+      ad.ad_type === "video"
+        ? `<iframe src="${Utils.escapeHtml(ad.media_url)}" allow="autoplay" style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>`
+        : `<a href="${Utils.escapeHtml(ad.link_url || "#")}" target="_blank" rel="noopener sponsored" style="position:absolute;inset:0;display:block;">
+             <img src="${Utils.escapeHtml(ad.media_url)}" alt="Iklan" style="width:100%;height:100%;object-fit:cover;">
+           </a>`;
+
+    playerWrap.innerHTML = `
+      <div id="prerollOverlay" style="position:absolute;inset:0;background:#000;">
+        ${mediaHtml}
+        <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.7);color:#fff;font-size:0.7rem;padding:3px 8px;border-radius:4px;">Iklan</div>
+        <div id="prerollSkipArea" style="position:absolute;bottom:10px;right:10px;">
+          <button id="prerollSkipBtn" disabled style="background:rgba(0,0,0,0.75);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:8px 14px;font-size:0.82rem;">
+            Lewati iklan dalam <span id="prerollCountdown">${skipSeconds}</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    let remaining = skipSeconds;
+    const countdownEl = document.getElementById("prerollCountdown");
+    const skipBtn = document.getElementById("prerollSkipBtn");
+
+    const timer = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(timer);
+        skipBtn.disabled = false;
+        skipBtn.textContent = "Lewati Iklan ▶";
+      } else {
+        countdownEl.textContent = remaining;
+      }
+    }, 1000);
+
+    skipBtn.addEventListener("click", () => {
+      if (skipBtn.disabled) return;
+      clearInterval(timer);
+      showVideoPlayer(video);
+    });
+  }
+
   async function load() {
     const slug = Utils.qs("slug");
     if (!slug) {
@@ -72,8 +138,7 @@
       const { video, related } = res.data;
       setMeta(video);
 
-      playerWrap.classList.remove("skeleton");
-      playerWrap.innerHTML = `<iframe src="${Utils.escapeHtml(video.embed_url)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+      await maybeShowPrerollAd(video);
 
       videoTitle.classList.remove("skeleton", "skeleton-line");
       videoTitle.style.height = "";
@@ -93,9 +158,6 @@
       } else {
         related.forEach((v) => relatedList.appendChild(relatedCard(v)));
       }
-
-      // Hitung view (server melindungi dari spam refresh)
-      fetch(`/api/view/${video.id}`, { method: "POST" }).catch(() => {});
 
       const shareData = { title: video.title, url: window.location.href };
       shareBtn.addEventListener("click", async () => {

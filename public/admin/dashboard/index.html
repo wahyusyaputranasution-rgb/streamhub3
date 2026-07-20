@@ -174,6 +174,24 @@
           </table>
         </div>
       </div>
+
+      <div class="panel">
+        <div class="panel-title">
+          <h2>Iklan Pre-Roll (Sebelum Video, Bisa Di-skip)</h2>
+          <button class="btn btn-primary" id="addPrerollBtn">+ Tambah Pre-Roll</button>
+        </div>
+        <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
+          Tampil sebelum video mulai diputar di halaman Watch, mirip iklan YouTube — ada hitung
+          mundur, lalu tombol "Lewati Iklan" muncul. Bisa berupa video (link embed) atau
+          gambar/banner.
+        </p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Nama</th><th>Tipe</th><th>Skip Setelah</th><th>Periode</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="prerollsBody"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- TAB: MONETIZATION -->
@@ -729,6 +747,67 @@
       <div class="field-error" id="sponsorFormError"></div>
       <div class="modal-actions">
         <button type="button" class="btn" id="sponsorCancelBtn">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: PRE-ROLL AD FORM -->
+<div class="modal-overlay" id="prerollModal">
+  <div class="modal-box">
+    <h2 id="prerollModalTitle">Tambah Iklan Pre-Roll</h2>
+    <form id="prerollForm">
+      <input type="hidden" id="prerollId">
+      <div class="field">
+        <label for="prerollNameInput">Nama (referensi internal)</label>
+        <input type="text" id="prerollNameInput" placeholder="Contoh: Pre-roll Brand X" required>
+      </div>
+      <div class="field">
+        <label for="prerollTypeSelect">Tipe Iklan</label>
+        <select id="prerollTypeSelect">
+          <option value="image">Gambar/Banner</option>
+          <option value="video">Video (link embed)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="prerollMediaInput">Link Media (URL gambar atau URL embed video)</label>
+        <input type="url" id="prerollMediaInput" placeholder="https://..." required>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <label for="prerollFileInput" class="btn" style="cursor:pointer;margin:0;">Upload Gambar dari HP</label>
+          <input type="file" id="prerollFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;">
+          <span id="prerollUploadStatus" style="font-size:0.78rem;color:var(--text-dim);"></span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="prerollLinkInput">Link Tujuan (khusus tipe gambar, opsional)</label>
+        <input type="url" id="prerollLinkInput" placeholder="https://... (dibuka saat gambar diklik)">
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label for="prerollSkipInput">Bisa Di-skip Setelah (detik)</label>
+          <input type="number" id="prerollSkipInput" min="1" max="60" value="5" required>
+        </div>
+        <div class="field">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:26px;">
+            <input type="checkbox" id="prerollEnabledInput" style="width:auto;" checked>
+            <span>Aktifkan</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label for="prerollStartInput">Tanggal Mulai</label>
+          <input type="date" id="prerollStartInput" required>
+        </div>
+        <div class="field">
+          <label for="prerollEndInput">Tanggal Berakhir</label>
+          <input type="date" id="prerollEndInput" required>
+        </div>
+      </div>
+      <div class="field-error" id="prerollFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="prerollCancelBtn">Batal</button>
         <button type="submit" class="btn btn-primary">Simpan</button>
       </div>
     </form>

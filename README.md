@@ -751,7 +751,43 @@ file yang diedit hanya untuk menambah wiring: `src/index.js`, `public/admin/dash
 
 ---
 
-## 43. Pengembangan Lokal
+## 43. Iklan Pre-Roll (Mirip Iklan YouTube, Bisa Di-skip)
+
+Iklan tampil **sebelum video mulai diputar** di halaman Watch — pola yang sama seperti iklan
+YouTube: hitung mundur dulu, baru tombol "Lewati Iklan" muncul.
+
+**Cara pakai:**
+1. Dashboard → tab **Sponsor** → panel **"Iklan Pre-Roll"** → **+ Tambah Pre-Roll**
+2. Pilih tipe:
+   - **Video** — tempel link embed video iklan (dari YouTube/Vimeo/dll)
+   - **Gambar/Banner** — upload dari HP atau tempel URL, bisa ditambah link tujuan (dibuka di tab
+     baru kalau diklik pengunjung)
+3. Atur **"Bisa Di-skip Setelah"** (detik) — sesuai keinginan, default 5 detik
+4. Atur tanggal mulai & berakhir (otomatis aktif/nonaktif sendiri, sama seperti Sponsor)
+5. Simpan
+
+**Cara kerja di sisi pengunjung:**
+- Buka halaman Watch → kalau ada iklan pre-roll aktif, muncul dulu menutupi player
+- Hitung mundur "Lewati iklan dalam 5...4...3...2...1"
+- Tombol "Lewati Iklan ▶" aktif → diklik → iklan hilang, video asli baru muncul dan baru saat itu
+  juga hitungan view bertambah
+
+**Catatan jujur soal batasan:** karena video di StreamHub adalah iframe dari provider luar
+(YouTube/Vimeo/dll), pre-roll ini **bukan iklan yang tertanam di dalam player video** seperti
+YouTube asli — melainkan **overlay terpisah** yang ditampilkan sebelum iframe video dimuat. Dari
+sisi pengalaman pengguna hasilnya serupa, tapi secara teknis keduanya berbeda cara kerja.
+
+**Toggle cepat aktif/nonaktif** sama seperti Sponsor — tombol langsung di tabel tanpa perlu buka
+form edit.
+
+**Migrasi database yang diperlukan** (aman, tidak menyentuh tabel lain):
+```bash
+wrangler d1 execute streaming_db --remote --file=./database/migration_preroll.sql
+```
+
+---
+
+## 44. Pengembangan Lokal
 
 ```bash
 npx wrangler dev

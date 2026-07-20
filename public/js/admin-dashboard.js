@@ -59,7 +59,10 @@
     if (tab === "video") loadVideosTable();
     if (tab === "kategori") loadCategoriesTable();
     if (tab === "iklan") loadAdsTable();
-    if (tab === "sponsor") loadSponsorsTable();
+    if (tab === "sponsor") {
+      loadSponsorsTable();
+      loadPrerollsTable();
+    }
     if (tab === "pengaturan") {
       loadAdminsTable();
       loadSiteSettings();
@@ -934,6 +937,172 @@
     } catch (err) {
       sponsorFormError.textContent = err.message || "Gagal menyimpan sponsor";
       sponsorFormError.style.display = "block";
+    }
+  });
+
+  // ---------- Pre-Roll Ads ----------
+  function prerollStatusBadge(ad) {
+    if (!ad.enabled) return '<span class="badge draft">Nonaktif</span>';
+    const today = new Date().toISOString().slice(0, 10);
+    if (today < ad.start_date) return '<span class="badge draft">Terjadwal</span>';
+    if (today > ad.end_date) return '<span class="badge draft">Kedaluwarsa</span>';
+    return '<span class="badge published">Aktif</span>';
+  }
+
+  async function loadPrerollsTable() {
+    const tbody = document.getElementById("prerollsBody");
+    tbody.innerHTML = `<tr><td colspan="6">Memuat...</td></tr>`;
+    try {
+      const res = await Utils.api("/api/preroll-ads");
+      const items = res.data;
+      tbody.innerHTML = items.length
+        ? items
+            .map(
+              (p) => `<tr>
+          <td class="title-cell">${Utils.escapeHtml(p.name)}</td>
+          <td>${p.ad_type === "video" ? "Video" : "Gambar"}</td>
+          <td>${p.skip_after_seconds}s</td>
+          <td>${formatDateOnly(p.start_date)} s/d ${formatDateOnly(p.end_date)}</td>
+          <td>${prerollStatusBadge(p)}</td>
+          <td>
+            <button class="icon-btn" data-toggle-preroll="${p.id}" data-enabled="${p.enabled}">${p.enabled ? "Nonaktifkan" : "Aktifkan"}</button>
+            <button class="icon-btn" data-edit-preroll="${p.id}">Edit</button>
+            <button class="icon-btn danger" data-delete-preroll="${p.id}" data-name="${Utils.escapeHtml(p.name)}">Hapus</button>
+          </td>
+        </tr>`
+            )
+            .join("")
+        : `<tr><td colspan="6">Belum ada iklan pre-roll. Klik "+ Tambah Pre-Roll" untuk mulai.</td></tr>`;
+
+      tbody.querySelectorAll("[data-toggle-preroll]").forEach((btn) => btn.addEventListener("click", () => togglePreroll(btn.dataset.togglePreroll, btn.dataset.enabled === "1")));
+      tbody.querySelectorAll("[data-edit-preroll]").forEach((btn) => btn.addEventListener("click", () => openPrerollModal(btn.dataset.editPreroll)));
+      tbody.querySelectorAll("[data-delete-preroll]").forEach((btn) =>
+        btn.addEventListener("click", () => confirmAction(`Hapus iklan pre-roll "${btn.dataset.name}"?`, () => deletePreroll(btn.dataset.deletePreroll)))
+      );
+    } catch {
+      tbody.innerHTML = `<tr><td colspan="6">Gagal memuat data iklan pre-roll.</td></tr>`;
+    }
+  }
+
+  async function deletePreroll(id) {
+    try {
+      await Utils.api(`/api/preroll-ads/${id}`, { method: "DELETE", needsCsrf: true });
+      showToast("Iklan pre-roll dihapus");
+      loadPrerollsTable();
+    } catch (err) {
+      showToast(err.message || "Gagal menghapus iklan pre-roll");
+    }
+  }
+
+  async function togglePreroll(id, currentlyEnabled) {
+    try {
+      const res = await Utils.api("/api/preroll-ads");
+      const p = (res.data || []).find((item) => String(item.id) === String(id));
+      if (!p) throw new Error("Iklan pre-roll tidak ditemukan");
+
+      await Utils.api(`/api/preroll-ads/${id}`, {
+        method: "PUT",
+        needsCsrf: true,
+        body: {
+          name: p.name,
+          adType: p.ad_type,
+          mediaUrl: p.media_url,
+          linkUrl: p.link_url || "",
+          skipAfterSeconds: p.skip_after_seconds,
+          startDate: formatDateOnly(p.start_date),
+          endDate: formatDateOnly(p.end_date),
+          enabled: !currentlyEnabled,
+        },
+      });
+      showToast(currentlyEnabled ? "Iklan pre-roll dinonaktifkan" : "Iklan pre-roll diaktifkan");
+      loadPrerollsTable();
+    } catch (err) {
+      showToast(err.message || "Gagal mengubah status");
+    }
+  }
+
+  const prerollModal = document.getElementById("prerollModal");
+  const prerollForm = document.getElementById("prerollForm");
+  const prerollFormError = document.getElementById("prerollFormError");
+  const prerollFileInput = document.getElementById("prerollFileInput");
+  const prerollUploadStatus = document.getElementById("prerollUploadStatus");
+
+  document.getElementById("addPrerollBtn").addEventListener("click", () => openPrerollModal(null));
+  document.getElementById("prerollCancelBtn").addEventListener("click", () => prerollModal.classList.remove("show"));
+
+  prerollFileInput.addEventListener("change", async () => {
+    const file = prerollFileInput.files[0];
+    if (!file) return;
+    prerollUploadStatus.textContent = "Mengompres & mengupload...";
+    try {
+      const dataUrl = await compressImage(file, 960, 0.8);
+      const [meta, base64Data] = dataUrl.split(",");
+      const contentType = meta.match(/data:(.*);base64/)[1];
+      const res = await Utils.api("/api/uploads", { method: "POST", needsCsrf: true, body: { contentType, data: base64Data } });
+      document.getElementById("prerollMediaInput").value = res.data.url;
+      prerollUploadStatus.textContent = "Berhasil diupload ✓";
+    } catch (err) {
+      prerollUploadStatus.textContent = err.message || "Gagal upload gambar";
+    }
+  });
+
+  async function openPrerollModal(id) {
+    prerollFormError.style.display = "none";
+    prerollForm.reset();
+    document.getElementById("prerollId").value = id || "";
+    document.getElementById("prerollModalTitle").textContent = id ? "Edit Iklan Pre-Roll" : "Tambah Iklan Pre-Roll";
+    prerollUploadStatus.textContent = "";
+    prerollFileInput.value = "";
+
+    if (id) {
+      try {
+        const res = await Utils.api("/api/preroll-ads");
+        const p = (res.data || []).find((item) => String(item.id) === String(id));
+        if (!p) throw new Error("Iklan pre-roll tidak ditemukan");
+        document.getElementById("prerollNameInput").value = p.name;
+        document.getElementById("prerollTypeSelect").value = p.ad_type;
+        document.getElementById("prerollMediaInput").value = p.media_url;
+        document.getElementById("prerollLinkInput").value = p.link_url || "";
+        document.getElementById("prerollSkipInput").value = p.skip_after_seconds;
+        document.getElementById("prerollStartInput").value = formatDateOnly(p.start_date);
+        document.getElementById("prerollEndInput").value = formatDateOnly(p.end_date);
+        document.getElementById("prerollEnabledInput").checked = !!p.enabled;
+      } catch (err) {
+        showToast("Gagal memuat data iklan pre-roll");
+        return;
+      }
+    }
+    prerollModal.classList.add("show");
+  }
+
+  prerollForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    prerollFormError.style.display = "none";
+    const id = document.getElementById("prerollId").value;
+    const payload = {
+      name: document.getElementById("prerollNameInput").value.trim(),
+      adType: document.getElementById("prerollTypeSelect").value,
+      mediaUrl: document.getElementById("prerollMediaInput").value.trim(),
+      linkUrl: document.getElementById("prerollLinkInput").value.trim(),
+      skipAfterSeconds: parseInt(document.getElementById("prerollSkipInput").value, 10) || 5,
+      startDate: document.getElementById("prerollStartInput").value,
+      endDate: document.getElementById("prerollEndInput").value,
+      enabled: document.getElementById("prerollEnabledInput").checked,
+    };
+
+    try {
+      if (id) {
+        await Utils.api(`/api/preroll-ads/${id}`, { method: "PUT", body: payload, needsCsrf: true });
+        showToast("Iklan pre-roll diperbarui");
+      } else {
+        await Utils.api("/api/preroll-ads", { method: "POST", body: payload, needsCsrf: true });
+        showToast("Iklan pre-roll ditambahkan");
+      }
+      prerollModal.classList.remove("show");
+      loadPrerollsTable();
+    } catch (err) {
+      prerollFormError.textContent = err.message || "Gagal menyimpan iklan pre-roll";
+      prerollFormError.style.display = "block";
     }
   });
 

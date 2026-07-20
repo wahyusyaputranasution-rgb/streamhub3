@@ -180,3 +180,19 @@ CREATE TABLE IF NOT EXISTS adsterra_sync_log (
 );
 
 CREATE INDEX IF NOT EXISTS idx_adsterra_sync_log_time ON adsterra_sync_log(synced_at);
+
+-- Iklan Pre-Roll (tampil sebelum video mulai, mirip iklan YouTube, bisa di-skip)
+CREATE TABLE IF NOT EXISTS preroll_ads (
+  id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+  name                TEXT NOT NULL,
+  ad_type             TEXT NOT NULL DEFAULT 'image' CHECK (ad_type IN ('video', 'image')),
+  media_url           TEXT NOT NULL,
+  link_url            TEXT,
+  skip_after_seconds  INTEGER NOT NULL DEFAULT 5,
+  enabled             INTEGER NOT NULL DEFAULT 1,
+  start_date          TEXT NOT NULL,
+  end_date            TEXT NOT NULL,
+  created_at          TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_preroll_ads_dates ON preroll_ads(start_date, end_date, enabled);

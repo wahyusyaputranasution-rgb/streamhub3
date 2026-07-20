@@ -45,6 +45,12 @@ import {
   createSponsorAd,
   updateSponsorAd,
   deleteSponsorAd,
+  listPrerollAds,
+  getPrerollAdById,
+  getActivePrerollAd,
+  createPrerollAd,
+  updatePrerollAd,
+  deletePrerollAd,
 } from "../lib/db.js";
 import { normalizeEmbedUrl } from "../lib/embed.js";
 import { sendPushNotification } from "../lib/webpush.js";
@@ -844,6 +850,94 @@ async function handleAdsterraDashboard(request, env) {
   }
 }
 
+// ================= PRE-ROLL ADS (mirip iklan YouTube, bisa di-skip) =================
+
+async function handlePrerollAdActive(request, env) {
+  if (request.method !== "GET") return fail("Method tidak diizinkan", 405);
+  const ad = await getActivePrerollAd(env.DB);
+  return ok(ad);
+}
+
+async function handlePrerollAdsCollection(request, env) {
+  if (request.method === "GET") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    const ads = await listPrerollAds(env.DB);
+    return ok(ads);
+  }
+
+  if (request.method === "POST") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+    const body = await request.json().catch(() => ({}));
+    const name = sanitizeText((body.name || "").trim());
+    const adType = body.adType === "video" ? "video" : "image";
+    const mediaUrl = (body.mediaUrl || "").trim();
+    const linkUrl = (body.linkUrl || "").trim();
+    const skipAfterSeconds = Math.max(1, Math.min(60, parseInt(body.skipAfterSeconds, 10) || 5));
+    const startDate = (body.startDate || "").trim();
+    const endDate = (body.endDate || "").trim();
+    const enabled = body.enabled === false ? 0 : 1;
+
+    if (!name) return fail("Nama iklan wajib diisi");
+    if (!mediaUrl || !isSafeUrl(mediaUrl)) return fail("Media (video/gambar) wajib diisi dengan URL yang valid");
+    if (linkUrl && !isSafeUrl(linkUrl)) return fail("Link tujuan tidak valid");
+    if (!startDate || !endDate) return fail("Tanggal mulai dan berakhir wajib diisi");
+    if (startDate > endDate) return fail("Tanggal mulai tidak boleh setelah tanggal berakhir");
+
+    const id = await createPrerollAd(env.DB, { name, adType, mediaUrl, linkUrl, skipAfterSeconds, startDate, endDate, enabled });
+    return ok({ id }, { message: "Iklan pre-roll berhasil dibuat" });
+  }
+
+  return fail("Method tidak diizinkan", 405);
+}
+
+async function handlePrerollAdById(request, env, id) {
+  if (request.method === "PUT") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+    const existing = await getPrerollAdById(env.DB, id);
+    if (!existing) return notFound("Iklan pre-roll tidak ditemukan");
+
+    const body = await request.json().catch(() => ({}));
+    const name = sanitizeText((body.name || "").trim());
+    const adType = body.adType === "video" ? "video" : "image";
+    const mediaUrl = (body.mediaUrl || "").trim();
+    const linkUrl = (body.linkUrl || "").trim();
+    const skipAfterSeconds = Math.max(1, Math.min(60, parseInt(body.skipAfterSeconds, 10) || 5));
+    const startDate = (body.startDate || "").trim();
+    const endDate = (body.endDate || "").trim();
+    const enabled = body.enabled === false ? 0 : 1;
+
+    if (!name) return fail("Nama iklan wajib diisi");
+    if (!mediaUrl || !isSafeUrl(mediaUrl)) return fail("Media (video/gambar) wajib diisi dengan URL yang valid");
+    if (linkUrl && !isSafeUrl(linkUrl)) return fail("Link tujuan tidak valid");
+    if (!startDate || !endDate) return fail("Tanggal mulai dan berakhir wajib diisi");
+    if (startDate > endDate) return fail("Tanggal mulai tidak boleh setelah tanggal berakhir");
+
+    await updatePrerollAd(env.DB, id, { name, adType, mediaUrl, linkUrl, skipAfterSeconds, startDate, endDate, enabled });
+    return ok({ id }, { message: "Iklan pre-roll berhasil diperbarui" });
+  }
+
+  if (request.method === "DELETE") {
+    const session = await requireAuth(request, env.DB);
+    if (!session) return unauthorized();
+    if (!verifyCsrf(request, session)) return forbidden("Token CSRF tidak valid");
+
+    const existing = await getPrerollAdById(env.DB, id);
+    if (!existing) return notFound("Iklan pre-roll tidak ditemukan");
+
+    await deletePrerollAd(env.DB, id);
+    return ok(null, { message: "Iklan pre-roll berhasil dihapus" });
+  }
+
+  return fail("Method tidak diizinkan", 405);
+}
+
 // ================= ADS =================
 
 const ALLOWED_PLACEMENTS = [
@@ -1057,6 +1151,13 @@ export default {
         response = await handlePublicSettings(request, env);
       } else if (path === "/api/automation/run-now") {
         response = await handleRunAutoPublishNow(request, env);
+      } else if (path === "/api/preroll-ads/active") {
+        response = await handlePrerollAdActive(request, env);
+      } else if (path === "/api/preroll-ads") {
+        response = await handlePrerollAdsCollection(request, env);
+      } else if (/^\/api\/preroll-ads\/\d+$/.test(path)) {
+        const id = parseInt(path.split("/").pop(), 10);
+        response = await handlePrerollAdById(request, env, id);
       } else if (path === "/api/sponsor-ads/active") {
         response = await handleSponsorAdActive(request, env);
       } else if (path === "/api/sponsor-ads") {
