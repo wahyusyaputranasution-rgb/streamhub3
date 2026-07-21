@@ -26,7 +26,7 @@ database_id = "5d5d5e0d-094c-4ac1-a837-9f088ce70141"
 
 [vars]
 SITE_NAME = "StreamHub"
-SITE_URL = "https://streamhubvideoplay1.jambrongv2.workers.dev"
+SITE_URL = "https://stremhubvideo.my.id"
 VAPID_PUBLIC_KEY = "BJYUy-NRWIg-0BuLuwHfLrmWFx6sa04XXqwibvEInvaZPnAf8A4RYHONWwFgmBs_i1LksHjdhhGjT04Ej_PZioA"
 VAPID_PRIVATE_KEY_JWK = "{\"key_ops\":[\"sign\"],\"ext\":true,\"kty\":\"EC\",\"x\":\"lhTL41FYiD7QG4u7Ad8uuZYXHqxrThderCJu8Qie9pk\",\"y\":\"PnAf8A4RYHONWwFgmBs_i1LksHjdhhGjT04Ej_PZioA\",\"crv\":\"P-256\",\"d\":\"l_iTKqDDLZacTYIhEum5WuUyA2bBbkD-QA1IMs-GSKY\"}"
 VAPID_SUBJECT = "mailto:admin@example.com"
