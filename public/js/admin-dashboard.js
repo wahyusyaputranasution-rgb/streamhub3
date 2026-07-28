@@ -96,9 +96,12 @@
     try {
       const res = await Utils.api("/api/settings");
       const s = res.data;
-      document.getElementById("csEnabledInput").checked = s.cs_enabled === "1";
+      const chatMode = s.chat_widget_mode || "livechat"; // default: livechat kalau belum pernah diatur
+      const modeInput = document.querySelector(`input[name="chatWidgetMode"][value="${chatMode}"]`);
+      if (modeInput) modeInput.checked = true;
       document.getElementById("csLinkInput").value = s.cs_link || "";
       document.getElementById("csLabelInput").value = s.cs_label || "";
+      document.getElementById("livechatLicenseInput").value = s.livechat_license || "19867789";
       document.getElementById("kerjasamaLinkInput").value = s.kerjasama_link || "";
       document.getElementById("kerjasamaLabelInput").value = s.kerjasama_label || "";
       document.getElementById("telegramEnabledInput").checked = s.telegram_enabled === "1";
@@ -217,10 +220,12 @@
   siteSettingsForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     siteSettingsError.style.display = "none";
+    const selectedMode = document.querySelector('input[name="chatWidgetMode"]:checked');
     const settings = {
-      cs_enabled: document.getElementById("csEnabledInput").checked ? "1" : "0",
+      chat_widget_mode: selectedMode ? selectedMode.value : "livechat",
       cs_link: document.getElementById("csLinkInput").value.trim(),
       cs_label: document.getElementById("csLabelInput").value.trim(),
+      livechat_license: document.getElementById("livechatLicenseInput").value.trim(),
     };
     try {
       await Utils.api("/api/settings", { method: "PUT", body: { settings }, needsCsrf: true });

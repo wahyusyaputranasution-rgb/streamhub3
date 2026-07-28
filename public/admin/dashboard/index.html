@@ -382,25 +382,39 @@
       </div>
 
       <div class="panel">
-        <div class="panel-title"><h2>Pengaturan Website (Customer Service)</h2></div>
+        <div class="panel-title"><h2>Widget Chat Mengambang</h2></div>
         <p style="color:var(--text-dim);font-size:0.82rem;margin-top:-4px;">
-          Pengaturan di sini langsung terhubung ke situs publik — tidak perlu edit kode atau
+          Hanya satu yang bisa aktif dalam satu waktu — pilih salah satu di bawah ini.
+          Pengaturan di sini langsung terhubung ke situs publik, tidak perlu edit kode atau
           deploy ulang.
         </p>
         <form id="siteSettingsForm">
           <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <input type="radio" name="chatWidgetMode" id="chatModeNone" value="none" style="width:auto;">
+              <span>Nonaktif (tidak ada widget chat)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <input type="radio" name="chatWidgetMode" id="chatModeCs" value="cs" style="width:auto;">
+              <span>Tombol Customer Service (link WhatsApp/Telegram sendiri)</span>
+            </label>
             <label style="display:flex;align-items:center;gap:8px;">
-              <input type="checkbox" id="csEnabledInput" style="width:auto;">
-              <span>Tampilkan tombol Customer Service mengambang di situs</span>
+              <input type="radio" name="chatWidgetMode" id="chatModeLivechat" value="livechat" style="width:auto;" checked>
+              <span>LiveChat Widget (livechat.com)</span>
             </label>
           </div>
-          <div class="field">
-            <label for="csLinkInput">Link Customer Service</label>
+
+          <div class="field" style="margin-top:16px;">
+            <label for="csLinkInput">Link Customer Service (dipakai kalau pilih opsi "Tombol Customer Service")</label>
             <input type="text" id="csLinkInput" placeholder="https://wa.me/62812xxxxxxx">
           </div>
           <div class="field">
-            <label for="csLabelInput">Label (opsional, teks kecil di sebelah tombol)</label>
+            <label for="csLabelInput">Label Customer Service (opsional, teks kecil di sebelah tombol)</label>
             <input type="text" id="csLabelInput" placeholder="Butuh bantuan?">
+          </div>
+          <div class="field">
+            <label for="livechatLicenseInput">LiveChat License Number (dipakai kalau pilih opsi "LiveChat Widget")</label>
+            <input type="text" id="livechatLicenseInput" placeholder="19867789">
           </div>
           <div class="field-error" id="siteSettingsError"></div>
           <button type="submit" class="btn btn-primary">Simpan Pengaturan</button>

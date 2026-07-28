@@ -787,7 +787,26 @@ wrangler d1 execute streaming_db --remote --file=./database/migration_preroll.sq
 
 ---
 
-## 44. Pengembangan Lokal
+## 44. Widget Chat Mengambang (Customer Service vs LiveChat, Saling Eksklusif)
+
+Sekarang cuma bisa **satu** widget chat aktif dalam satu waktu — dipilih lewat radio button
+(bukan checkbox terpisah), supaya nggak mungkin dua-duanya nyala bareng.
+
+**Cara atur:**
+Dashboard → tab Pengaturan → panel **"Widget Chat Mengambang"** → pilih salah satu:
+- **Nonaktif** — tidak ada widget chat sama sekali
+- **Tombol Customer Service** — pakai link WhatsApp/Telegram sendiri (isi di kolom Link & Label)
+- **LiveChat Widget** — pakai layanan livechat.com (isi License Number di kolom yang tersedia)
+
+**Default:** kalau belum pernah diatur sama sekali, otomatis pakai **LiveChat Widget** dengan
+License Number `19867789`.
+
+**Migrasi database:** tidak perlu — masih numpang tabel `settings` yang sudah ada dari
+fitur-fitur sebelumnya.
+
+---
+
+## 45. Pengembangan Lokal
 
 ```bash
 npx wrangler dev
